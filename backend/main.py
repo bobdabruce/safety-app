@@ -46,8 +46,26 @@ UPLOADS_PATH.mkdir(exist_ok=True)  # Create uploads folder if it doesn't exist
 
 def load_memory():
     if MEMORY_FILE.exists():
-        return json.loads(MEMORY_FILE.read_text())
-    return {"conversations": [], "facts": []}
+        data = json.loads(MEMORY_FILE.read_text())
+        # Ensure math_progress exists
+        if "math_progress" not in data:
+            data["math_progress"] = {
+                "level": 1,
+                "correct": 0,
+                "incorrect": 0,
+                "streak": 0,
+                "weak_areas": [],
+                "sessions": 0
+            }
+        return data
+    return {"conversations": [], "facts": [], "math_progress": {
+        "level": 1,
+        "correct": 0,
+        "incorrect": 0,
+        "streak": 0,
+        "weak_areas": [],
+        "sessions": 0
+    }}
 
 def save_memory(memory):
     MEMORY_FILE.write_text(json.dumps(memory, indent=2))
@@ -61,6 +79,28 @@ About Bob:
 - Crypto investor (~$10K portfolio)
 - Prefers short, clear communication - no jargon walls
 - Has memory challenges - be proactive with reminders
+- Math skills around 6th grade level - wants to improve. When helping with math:
+  * Break problems into small steps
+  * Use real-world examples (money, percentages, OHS calculations)
+  * Be patient and encouraging
+  * Start simple, build up gradually
+
+MATH PRACTICE MODE:
+When Bob asks for math practice, follow this structure:
+- Level 1: Basic addition/subtraction (single digit, then double digit)
+- Level 2: Basic multiplication/division
+- Level 3: Percentages and fractions
+- Level 4: Word problems with money
+- Level 5: Multi-step problems, OHS calculations
+
+Rules:
+- Give ONE problem at a time
+- Wait for answer before giving next
+- If correct: praise briefly, give next problem
+- If wrong: explain step-by-step, then give similar problem
+- After 5 correct in a row at 80%+ accuracy, suggest moving up
+- Track: respond with [MATH_CORRECT] or [MATH_INCORRECT:topic] so system can track
+- Current progress shown below
 
 KEY DATES (calculate from current date below):
 - Graduation: Oct 2026
@@ -201,6 +241,15 @@ async def chat(request: ChatRequest):
         for fact in memory["facts"][-20:]:
             system += f"- {fact}\n"
 
+    # Add math progress
+    mp = memory.get("math_progress", {})
+    if mp:
+        total = mp.get("correct", 0) + mp.get("incorrect", 0)
+        accuracy = (mp.get("correct", 0) / total * 100) if total > 0 else 0
+        system += f"\n\nMath Progress: Level {mp.get('level', 1)}, {mp.get('correct', 0)} correct, {mp.get('incorrect', 0)} incorrect ({accuracy:.0f}% accuracy), streak: {mp.get('streak', 0)}"
+        if mp.get("weak_areas"):
+            system += f", weak areas: {', '.join(mp['weak_areas'][-3:])}"
+
     try:
         response = client.messages.create(
             model="claude-sonnet-4-20250514",
@@ -249,6 +298,29 @@ async def chat(request: ChatRequest):
             for fact in facts:
                 memory["facts"].append(fact)
             assistant_message = re.sub(r'\[REMEMBER: .*?\]', '', assistant_message).strip()
+
+        # Track math progress
+        if "[MATH_CORRECT]" in assistant_message:
+            memory["math_progress"]["correct"] += 1
+            memory["math_progress"]["streak"] += 1
+            # Level up after 5 correct in a row
+            if memory["math_progress"]["streak"] >= 5 and memory["math_progress"]["level"] < 5:
+                total = memory["math_progress"]["correct"] + memory["math_progress"]["incorrect"]
+                accuracy = memory["math_progress"]["correct"] / total if total > 0 else 0
+                if accuracy >= 0.8:
+                    memory["math_progress"]["level"] += 1
+                    memory["math_progress"]["streak"] = 0
+            assistant_message = re.sub(r'\[MATH_CORRECT\]', '', assistant_message).strip()
+
+        if "[MATH_INCORRECT:" in assistant_message:
+            memory["math_progress"]["incorrect"] += 1
+            memory["math_progress"]["streak"] = 0
+            # Track weak area
+            weak = re.findall(r'\[MATH_INCORRECT:(.*?)\]', assistant_message)
+            for area in weak:
+                if area not in memory["math_progress"]["weak_areas"]:
+                    memory["math_progress"]["weak_areas"].append(area)
+            assistant_message = re.sub(r'\[MATH_INCORRECT:.*?\]', '', assistant_message).strip()
 
         # Save to memory
         memory["conversations"].append({
@@ -440,8 +512,36 @@ async def get_memory():
 @app.delete("/api/memory")
 async def clear_memory():
     """Clear all memory (Bob's control)"""
-    save_memory({"conversations": [], "facts": []})
+    save_memory({"conversations": [], "facts": [], "math_progress": {
+        "level": 1, "correct": 0, "incorrect": 0, "streak": 0, "weak_areas": [], "sessions": 0
+    }})
     return {"status": "memory cleared"}
+
+@app.get("/api/math/progress")
+async def get_math_progress():
+    """Get math practice progress"""
+    memory = load_memory()
+    mp = memory.get("math_progress", {})
+    total = mp.get("correct", 0) + mp.get("incorrect", 0)
+    accuracy = (mp.get("correct", 0) / total * 100) if total > 0 else 0
+    return {
+        "level": mp.get("level", 1),
+        "correct": mp.get("correct", 0),
+        "incorrect": mp.get("incorrect", 0),
+        "accuracy": round(accuracy, 1),
+        "streak": mp.get("streak", 0),
+        "weak_areas": mp.get("weak_areas", [])
+    }
+
+@app.delete("/api/math/progress")
+async def reset_math_progress():
+    """Reset math progress to start over"""
+    memory = load_memory()
+    memory["math_progress"] = {
+        "level": 1, "correct": 0, "incorrect": 0, "streak": 0, "weak_areas": [], "sessions": 0
+    }
+    save_memory(memory)
+    return {"status": "math progress reset"}
 
 @app.get("/api/organize/preview")
 async def preview_organize():
