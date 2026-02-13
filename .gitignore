@@ -1,0 +1,10 @@
+.env
+__pycache__/
+*.pyc
+.DS_Store
+venv/
+node_modules/
+*.db
+backend/memory.json
+backend/duplicates_log.txt
+server.log

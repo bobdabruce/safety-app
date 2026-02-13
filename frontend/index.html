@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1a1a2e">
+    <title>SafetyNomad AI</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16213e;
+            --bg-tertiary: #0f3460;
+            --accent: #e94560;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --success: #4ade80;
+            --user-bubble: #3b82f6;
+            --ai-bubble: #1e293b;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, var(--bg-primary), var(--bg-secondary), var(--bg-tertiary));
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            color: var(--text-primary);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header {
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .header h1 {
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header .logo { font-size: 1.5rem; }
+
+        .status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+        }
+
+        .status-dot.offline { background: var(--accent); }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: scroll;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            min-height: 0;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.5;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            background: var(--user-bubble);
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant {
+            background: var(--ai-bubble);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .message .time {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-self: flex-start;
+            padding: 15px 20px;
+            background: var(--ai-bubble);
+            border-radius: 18px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .typing-indicator.show { display: flex; gap: 5px; }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: var(--text-secondary);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+
+        .typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-8px); }
+        }
+
+        .input-area {
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.4);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+        }
+
+        #messageInput {
+            flex: 1;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 24px;
+            padding: 12px 20px;
+            color: var(--text-primary);
+            font-size: 16px;
+            resize: none;
+            max-height: 120px;
+            outline: none;
+        }
+
+        #messageInput:focus {
+            border-color: var(--accent);
+        }
+
+        #messageInput::placeholder {
+            color: var(--text-secondary);
+        }
+
+        .btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            transition: all 0.2s;
+        }
+
+        .btn-send {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-send:hover { transform: scale(1.05); }
+        .btn-send:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-voice {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-voice:hover { background: rgba(255,255,255,0.2); }
+        .btn-voice.recording {
+            background: var(--accent);
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4); }
+            50% { box-shadow: 0 0 0 15px rgba(233, 69, 96, 0); }
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .quick-btn {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 6px 12px;
+            color: var(--text-primary);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .quick-btn:hover {
+            background: rgba(255,255,255,0.2);
+            border-color: var(--accent);
+        }
+
+        .welcome {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .welcome h2 {
+            color: var(--text-primary);
+            margin-bottom: 10px;
+            font-size: 1.5rem;
+        }
+
+        .welcome p { margin-bottom: 20px; }
+
+        @media (max-width: 600px) {
+            .header h1 { font-size: 1.1rem; }
+            .message { max-width: 90%; }
+            .quick-btn { font-size: 0.75rem; padding: 5px 10px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span class="logo">🛡️</span> SafetyNomad AI</h1>
+        <div class="status">
+            <div class="status-dot" id="statusDot"></div>
+            <span id="statusText">Online</span>
+        </div>
+    </div>
+
+    <div class="chat-container" id="chatContainer">
+        <div class="welcome">
+            <h2>Welcome, Bob</h2>
+            <p>Your personal AI assistant is ready. Ask me anything or use voice input.</p>
+        </div>
+        <div class="typing-indicator" id="typingIndicator">
+            <span></span><span></span><span></span>
+        </div>
+    </div>
+
+    <div class="input-area">
+        <div class="quick-actions">
+            <button class="quick-btn" onclick="quickAction('Clean my Downloads folder')">📥 Downloads</button>
+            <button class="quick-btn" onclick="quickAction('Clean my Desktop')">🖥️ Desktop</button>
+            <button class="quick-btn" onclick="quickAction('What should I focus on today?')">📋 Today</button>
+            <button class="quick-btn" onclick="quickAction('Check my crypto portfolio')">💰 Crypto</button>
+            <button class="quick-btn" onclick="quickAction('OHS study tip')">📚 OHS</button>
+            <button class="quick-btn" onclick="quickAction('Teach me a Khmer phrase')">🇰🇭 Khmer</button>
+            <button class="quick-btn" onclick="quickAction('What do you remember about me?')">🧠 Memory</button>
+            <button class="quick-btn" onclick="quickAction('Set a reminder')">⏰ Remind</button>
+        </div>
+        <div class="input-wrapper">
+            <button class="btn btn-voice" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+            <textarea
+                id="messageInput"
+                placeholder="Type or speak your message..."
+                rows="1"
+                onkeydown="handleKeydown(event)"
+                oninput="autoResize(this)"
+            ></textarea>
+            <button class="btn btn-send" id="sendBtn" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin;
+        let isRecording = false;
+        let recognition = null;
+
+        // Initialize speech recognition
+        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = (event) => {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0].transcript)
+                    .join('');
+                document.getElementById('messageInput').value = transcript;
+                autoResize(document.getElementById('messageInput'));
+            };
+
+            recognition.onend = () => {
+                isRecording = false;
+                document.getElementById('voiceBtn').classList.remove('recording');
+                // Auto-send after voice input
+                if (document.getElementById('messageInput').value.trim()) {
+                    sendMessage();
+                }
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error:', event.error);
+                isRecording = false;
+                document.getElementById('voiceBtn').classList.remove('recording');
+            };
+        }
+
+        function toggleVoice() {
+            if (!recognition) {
+                alert('Voice input not supported in this browser. Try Chrome or Safari.');
+                return;
+            }
+
+            if (isRecording) {
+                recognition.stop();
+                isRecording = false;
+                document.getElementById('voiceBtn').classList.remove('recording');
+            } else {
+                recognition.start();
+                isRecording = true;
+                document.getElementById('voiceBtn').classList.add('recording');
+                document.getElementById('messageInput').value = '';
+                document.getElementById('messageInput').placeholder = 'Listening...';
+            }
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            // Clear input
+            input.value = '';
+            input.placeholder = 'Type or speak your message...';
+            autoResize(input);
+
+            // Remove welcome message
+            const welcome = document.querySelector('.welcome');
+            if (welcome) welcome.remove();
+
+            // Add user message
+            addMessage(message, 'user');
+
+            // Show typing indicator
+            document.getElementById('typingIndicator').classList.add('show');
+            scrollToBottom();
+
+            try {
+                const response = await fetch(`${API_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message })
+                });
+
+                const data = await response.json();
+
+                // Hide typing indicator
+                document.getElementById('typingIndicator').classList.remove('show');
+
+                if (response.ok) {
+                    addMessage(data.response, 'assistant');
+                } else {
+                    addMessage('Sorry, something went wrong. Please try again.', 'assistant');
+                }
+            } catch (error) {
+                document.getElementById('typingIndicator').classList.remove('show');
+                addMessage('Cannot connect to server. Please check your connection.', 'assistant');
+                updateStatus(false);
+            }
+        }
+
+        function addMessage(text, role) {
+            const container = document.getElementById('chatContainer');
+            const typingIndicator = document.getElementById('typingIndicator');
+            const div = document.createElement('div');
+            div.className = `message ${role}`;
+
+            const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            div.innerHTML = `${formatMessage(text)}<div class="time">${time}</div>`;
+
+            // Insert before typing indicator so it stays at bottom
+            container.insertBefore(div, typingIndicator);
+            scrollToBottom();
+        }
+
+        function formatMessage(text) {
+            // Basic markdown-like formatting
+            return text
+                .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                .replace(/\n/g, '<br>');
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chatContainer');
+            requestAnimationFrame(() => {
+                container.scrollTop = container.scrollHeight + 1000;
+            });
+        }
+
+        function handleKeydown(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function autoResize(textarea) {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+
+        function quickAction(message) {
+            document.getElementById('messageInput').value = message;
+            sendMessage();
+        }
+
+        function updateStatus(online) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            if (online) {
+                dot.classList.remove('offline');
+                text.textContent = 'Online';
+            } else {
+                dot.classList.add('offline');
+                text.textContent = 'Offline';
+            }
+        }
+
+        // Check server status on load
+        fetch(`${API_URL}/api/health`)
+            .then(r => r.ok ? updateStatus(true) : updateStatus(false))
+            .catch(() => updateStatus(false));
+
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/static/sw.js')
+                .catch(err => console.log('SW registration failed:', err));
+        }
+    </script>
+</body>
+</html>
