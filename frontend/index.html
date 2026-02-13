@@ -208,6 +208,41 @@
             animation: pulse 1s infinite;
         }
 
+        .btn-upload {
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        .btn-upload:hover { background: rgba(255,255,255,0.2); }
+        .btn-upload.has-files { background: var(--success); }
+
+        .attachments {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .attachment {
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .attachment img {
+            width: 40px;
+            height: 40px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .attachment .remove {
+            cursor: pointer;
+            opacity: 0.6;
+        }
+        .attachment .remove:hover { opacity: 1; }
+
         @keyframes pulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4); }
             50% { box-shadow: 0 0 0 15px rgba(233, 69, 96, 0); }
@@ -290,6 +325,8 @@
         </div>
         <div class="input-wrapper">
             <button class="btn btn-voice" id="voiceBtn" onclick="toggleVoice()">🎤</button>
+            <button class="btn btn-upload" id="uploadBtn" onclick="document.getElementById('fileInput').click()">📎</button>
+            <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx,.txt,.csv" multiple style="display:none" onchange="handleFileSelect(event)">
             <textarea
                 id="messageInput"
                 placeholder="Type or speak your message..."
@@ -299,12 +336,64 @@
             ></textarea>
             <button class="btn btn-send" id="sendBtn" onclick="sendMessage()">➤</button>
         </div>
+        <div class="attachments" id="attachments"></div>
     </div>
 
     <script>
         const API_URL = window.location.origin;
         let isRecording = false;
         let recognition = null;
+        let pendingFiles = [];
+
+        function handleFileSelect(event) {
+            const files = Array.from(event.target.files);
+            files.forEach(file => {
+                pendingFiles.push(file);
+                displayAttachment(file);
+            });
+            document.getElementById('uploadBtn').classList.add('has-files');
+            event.target.value = ''; // Reset input
+        }
+
+        function displayAttachment(file) {
+            const container = document.getElementById('attachments');
+            const div = document.createElement('div');
+            div.className = 'attachment';
+            div.dataset.name = file.name;
+
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                div.appendChild(img);
+            }
+
+            const name = document.createElement('span');
+            name.textContent = file.name.length > 20 ? file.name.substring(0, 17) + '...' : file.name;
+            div.appendChild(name);
+
+            const remove = document.createElement('span');
+            remove.className = 'remove';
+            remove.textContent = '✕';
+            remove.onclick = () => removeAttachment(file.name);
+            div.appendChild(remove);
+
+            container.appendChild(div);
+        }
+
+        function removeAttachment(fileName) {
+            pendingFiles = pendingFiles.filter(f => f.name !== fileName);
+            const el = document.querySelector(`.attachment[data-name="${fileName}"]`);
+            if (el) el.remove();
+            if (pendingFiles.length === 0) {
+                document.getElementById('uploadBtn').classList.remove('has-files');
+            }
+        }
+
+        function clearAttachments() {
+            pendingFiles = [];
+            document.getElementById('attachments').innerHTML = '';
+            document.getElementById('uploadBtn').classList.remove('has-files');
+        }
 
         // Initialize speech recognition
         if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
@@ -360,7 +449,7 @@
         async function sendMessage() {
             const input = document.getElementById('messageInput');
             const message = input.value.trim();
-            if (!message) return;
+            if (!message && pendingFiles.length === 0) return;
 
             // Clear input
             input.value = '';
@@ -371,19 +460,37 @@
             const welcome = document.querySelector('.welcome');
             if (welcome) welcome.remove();
 
-            // Add user message
-            addMessage(message, 'user');
+            // Add user message with attachment indicator
+            const displayMsg = pendingFiles.length > 0
+                ? `${message || 'Attached files'} 📎${pendingFiles.length}`
+                : message;
+            addMessage(displayMsg, 'user');
 
             // Show typing indicator
             document.getElementById('typingIndicator').classList.add('show');
             scrollToBottom();
 
             try {
-                const response = await fetch(`${API_URL}/api/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message })
-                });
+                let response;
+
+                if (pendingFiles.length > 0) {
+                    // Use FormData for file uploads
+                    const formData = new FormData();
+                    formData.append('message', message || 'What is this?');
+                    pendingFiles.forEach(file => formData.append('files', file));
+
+                    response = await fetch(`${API_URL}/api/chat/upload`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    clearAttachments();
+                } else {
+                    response = await fetch(`${API_URL}/api/chat`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ message })
+                    });
+                }
 
                 const data = await response.json();
 

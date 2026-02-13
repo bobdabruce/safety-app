@@ -1,12 +1,14 @@
 """
 SafetyNomad AI - Backend Server
 Phase 1: Chat + Memory + File Organizer
+Phase 2: File uploads (images, PDFs, docs)
 """
 import os
 import re
 import hashlib
+import base64
 from datetime import datetime
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -15,6 +17,7 @@ from anthropic import Anthropic
 from dotenv import load_dotenv
 import json
 from pathlib import Path
+from typing import List, Optional
 
 # Load environment variables
 load_dotenv(Path(__file__).parent.parent / ".env")
@@ -38,6 +41,8 @@ MEMORY_FILE = Path(__file__).parent / "memory.json"
 DOWNLOADS_PATH = Path.home() / "Downloads"
 DESKTOP_PATH = Path.home() / "Desktop"
 SCREENSHOTS_PATH = Path.home() / "Desktop"  # macOS default, screenshots go to Desktop
+UPLOADS_PATH = Path(__file__).parent.parent / "uploads"
+UPLOADS_PATH.mkdir(exist_ok=True)  # Create uploads folder if it doesn't exist
 
 def load_memory():
     if MEMORY_FILE.exists():
@@ -258,6 +263,155 @@ async def chat(request: ChatRequest):
         })
 
         # Keep only last 100 messages to manage size
+        memory["conversations"] = memory["conversations"][-100:]
+        save_memory(memory)
+
+        return ChatResponse(
+            response=assistant_message,
+            timestamp=datetime.now().isoformat()
+        )
+
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/chat/upload", response_model=ChatResponse)
+async def chat_with_upload(
+    message: str = Form(default="What is this?"),
+    files: List[UploadFile] = File(...)
+):
+    """Chat endpoint with file uploads (images, PDFs, etc.)"""
+    memory = load_memory()
+
+    # Process uploaded files
+    content_parts = []
+    file_descriptions = []
+
+    for file in files:
+        file_bytes = await file.read()
+        file_ext = Path(file.filename).suffix.lower()
+
+        # Save file to uploads folder
+        save_path = UPLOADS_PATH / f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{file.filename}"
+        save_path.write_bytes(file_bytes)
+
+        if file_ext in ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic']:
+            # Image - use Claude vision (compress if >4MB)
+            from io import BytesIO
+            try:
+                from PIL import Image
+                img = Image.open(BytesIO(file_bytes))
+
+                # Convert HEIC or other formats to JPEG
+                if img.mode in ('RGBA', 'P'):
+                    img = img.convert('RGB')
+
+                # Resize if too large (max 4MB for safety margin)
+                max_size = 4 * 1024 * 1024  # 4MB
+                quality = 85
+                output = BytesIO()
+
+                while True:
+                    output.seek(0)
+                    output.truncate()
+                    img.save(output, format='JPEG', quality=quality)
+                    if output.tell() <= max_size or quality <= 20:
+                        break
+                    # Reduce quality or size
+                    if quality > 40:
+                        quality -= 15
+                    else:
+                        # Resize image
+                        img = img.resize((int(img.width * 0.7), int(img.height * 0.7)), Image.LANCZOS)
+                        quality = 70
+
+                file_bytes = output.getvalue()
+                media_type = "image/jpeg"
+            except ImportError:
+                # No PIL, try without compression
+                media_type = f"image/{file_ext[1:]}"
+                if file_ext == '.jpg':
+                    media_type = "image/jpeg"
+
+            base64_image = base64.standard_b64encode(file_bytes).decode('utf-8')
+
+            content_parts.append({
+                "type": "image",
+                "source": {
+                    "type": "base64",
+                    "media_type": media_type,
+                    "data": base64_image
+                }
+            })
+            file_descriptions.append(f"[Image: {file.filename}]")
+
+        elif file_ext == '.pdf':
+            # PDF - extract text (basic approach)
+            try:
+                import fitz  # PyMuPDF
+                pdf = fitz.open(stream=file_bytes, filetype="pdf")
+                text = ""
+                for page in pdf:
+                    text += page.get_text()
+                pdf.close()
+                content_parts.append({
+                    "type": "text",
+                    "text": f"[PDF Content from {file.filename}]:\n{text[:5000]}"  # Limit to 5000 chars
+                })
+                file_descriptions.append(f"[PDF: {file.filename}]")
+            except ImportError:
+                content_parts.append({
+                    "type": "text",
+                    "text": f"[PDF uploaded: {file.filename} - install PyMuPDF to read content]"
+                })
+                file_descriptions.append(f"[PDF: {file.filename}]")
+
+        elif file_ext in ['.txt', '.md', '.csv', '.json']:
+            # Text files
+            try:
+                text_content = file_bytes.decode('utf-8')
+                content_parts.append({
+                    "type": "text",
+                    "text": f"[File: {file.filename}]:\n{text_content[:5000]}"
+                })
+                file_descriptions.append(f"[Text: {file.filename}]")
+            except:
+                file_descriptions.append(f"[File: {file.filename} - could not read]")
+
+        else:
+            file_descriptions.append(f"[File: {file.filename} - unsupported format]")
+
+    # Add the user's message
+    content_parts.append({"type": "text", "text": message})
+
+    # Build system prompt
+    system = SYSTEM_PROMPT.format(date=datetime.now().strftime("%Y-%m-%d %H:%M"))
+    if memory["facts"]:
+        system += "\n\nThings you remember about Bob:\n"
+        for fact in memory["facts"][-20:]:
+            system += f"- {fact}\n"
+
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514",
+            max_tokens=2048,
+            system=system,
+            messages=[{"role": "user", "content": content_parts}]
+        )
+
+        assistant_message = response.content[0].text
+
+        # Save to memory
+        user_msg = f"{message} {' '.join(file_descriptions)}"
+        memory["conversations"].append({
+            "role": "user",
+            "content": user_msg,
+            "timestamp": datetime.now().isoformat()
+        })
+        memory["conversations"].append({
+            "role": "assistant",
+            "content": assistant_message,
+            "timestamp": datetime.now().isoformat()
+        })
         memory["conversations"] = memory["conversations"][-100:]
         save_memory(memory)
 

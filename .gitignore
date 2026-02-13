@@ -8,3 +8,4 @@ node_modules/
 backend/memory.json
 backend/duplicates_log.txt
 server.log
+uploads/
