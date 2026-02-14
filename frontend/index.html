@@ -243,6 +243,31 @@
         }
         .attachment .remove:hover { opacity: 1; }
 
+        /* Drag and drop */
+        .drop-zone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(233, 69, 96, 0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            pointer-events: none;
+        }
+        .drop-zone.active {
+            display: flex;
+        }
+        .drop-zone-text {
+            font-size: 2rem;
+            color: white;
+            padding: 40px;
+            border: 3px dashed white;
+            border-radius: 20px;
+        }
+
         @keyframes pulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4); }
             50% { box-shadow: 0 0 0 15px rgba(233, 69, 96, 0); }
@@ -294,6 +319,9 @@
     </style>
 </head>
 <body>
+    <div class="drop-zone" id="dropZone">
+        <div class="drop-zone-text">📎 Drop files here</div>
+    </div>
     <div class="header">
         <h1><span class="logo">🛡️</span> SafetyNomad AI</h1>
         <div class="status">
@@ -344,6 +372,42 @@
         let isRecording = false;
         let recognition = null;
         let pendingFiles = [];
+        let dragCounter = 0;
+
+        // Drag and drop handling
+        document.addEventListener('dragenter', (e) => {
+            e.preventDefault();
+            dragCounter++;
+            document.getElementById('dropZone').classList.add('active');
+        });
+
+        document.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            dragCounter--;
+            if (dragCounter === 0) {
+                document.getElementById('dropZone').classList.remove('active');
+            }
+        });
+
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+        });
+
+        document.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dragCounter = 0;
+            document.getElementById('dropZone').classList.remove('active');
+
+            const files = Array.from(e.dataTransfer.files);
+            files.forEach(file => {
+                pendingFiles.push(file);
+                displayAttachment(file);
+            });
+            if (files.length > 0) {
+                document.getElementById('uploadBtn').classList.add('has-files');
+                document.getElementById('messageInput').focus();
+            }
+        });
 
         function handleFileSelect(event) {
             const files = Array.from(event.target.files);
