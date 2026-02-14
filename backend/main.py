@@ -7,6 +7,7 @@ import os
 import re
 import hashlib
 import base64
+import logging
 from datetime import datetime
 from fastapi import FastAPI, HTTPException, File, UploadFile, Form
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,6 +19,18 @@ from dotenv import load_dotenv
 import json
 from pathlib import Path
 from typing import List, Optional
+
+# Set up logging
+LOG_FILE = Path(__file__).parent / "activity.log"
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s | %(levelname)s | %(message)s',
+    handlers=[
+        logging.FileHandler(LOG_FILE),
+        logging.StreamHandler()
+    ]
+)
+logger = logging.getLogger("SafetyNomad")
 
 # Load environment variables
 load_dotenv(Path(__file__).parent.parent / ".env")
@@ -170,11 +183,13 @@ async def root():
 @app.post("/api/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest):
     """Main chat endpoint"""
+    logger.info(f"CHAT REQUEST: {request.message[:100]}")
     memory = load_memory()
 
     # CHECK FOR APPROVAL FIRST - before calling Claude
     if request.message.lower() in ["yes", "yes, organize them", "organize them", "do it", "proceed", "go ahead", "yes organize them", "yes, delete them", "delete them", "yes delete them", "yes, clean them", "clean them"]:
         last_content = memory["conversations"][-1].get("content", "").lower() if memory["conversations"] else ""
+        logger.info(f"APPROVAL DETECTED - checking last content: {last_content[:100]}")
 
         # Detect which location was being cleaned
         target_path = None
@@ -190,9 +205,11 @@ async def chat(request: ChatRequest):
             location_name = "Screenshots"
 
         if target_path and ("file" in last_content or "duplicate" in last_content or "trash" in last_content or "sort" in last_content or "clean" in last_content):
+            logger.info(f"EXECUTING CLEANUP on {location_name} - User approved")
             # Do both: organize files AND remove duplicates
             org_result = organize_folder(target_path, preview=False)
             dup_result = find_duplicates_in(target_path, preview=False)
+            logger.info(f"CLEANUP COMPLETE: {len(org_result.files_moved)} organized, {len(dup_result.duplicates)} duplicates removed")
 
             parts = []
             if org_result.files_moved:
@@ -543,6 +560,21 @@ async def reset_math_progress():
     save_memory(memory)
     return {"status": "math progress reset"}
 
+@app.get("/api/logs")
+async def get_activity_logs():
+    """View recent activity logs"""
+    if LOG_FILE.exists():
+        lines = LOG_FILE.read_text().split('\n')
+        return {"logs": lines[-50:]}  # Last 50 lines
+    return {"logs": []}
+
+@app.delete("/api/logs")
+async def clear_logs():
+    """Clear activity logs"""
+    if LOG_FILE.exists():
+        LOG_FILE.write_text("")
+    return {"status": "logs cleared"}
+
 @app.get("/api/organize/preview")
 async def preview_organize():
     """Preview what files would be organized (no action taken)"""
@@ -590,12 +622,14 @@ def organize_folder(folder_path, preview=True):
 
                     if not preview:
                         dest_folder.mkdir(exist_ok=True)
+                        logger.info(f"MOVE FILE: {file.name} → {category}/")
                         file.rename(dest_folder / file.name)
                     break
 
     if preview:
         msg = f"Preview: {len(files_to_move)} files would be organized."
     else:
+        logger.info(f"ORGANIZE COMPLETE: {len(files_to_move)} files moved in {folder_path}")
         msg = f"Organized {len(files_to_move)} files into categories."
 
     return OrganizeResponse(
@@ -674,6 +708,7 @@ def find_duplicates_in(folder_path, preview=True):
 
                 if not preview:
                     # Move to Trash instead of permanent delete
+                    logger.info(f"TRASH DUPLICATE: {dup.name} (original: {files[0].name})")
                     trash_dest = move_to_trash(dup)
                     log_entries.append(f"{datetime.now().isoformat()} | TRASHED | {dup} | Original: {files[0].name}")
 
