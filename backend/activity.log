@@ -1,0 +1,12 @@
+2026-02-14 10:30:31,534 | INFO | CHAT REQUEST: logs
+2026-02-14 10:30:35,407 | INFO | HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-02-14 10:30:59,640 | INFO | CHAT REQUEST: so waht happened before you cleaned up the desktop without asking. what were we talking about
+2026-02-14 10:31:08,008 | INFO | HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-02-14 10:38:56,344 | INFO | CHAT REQUEST: Can you help me research landscape business prices?
+2026-02-14 10:39:04,467 | INFO | HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"
+2026-02-14 10:39:04,495 | INFO | CHAT REQUEST: yes
+2026-02-14 10:39:04,496 | INFO | APPROVAL DETECTED - checking last content: i can help you research landscape business prices! let me break this down into useful categories:
+
+*
+2026-02-14 10:39:04,496 | INFO | NOT a cleanup preview - passing to Claude instead
+2026-02-14 10:39:09,587 | INFO | HTTP Request: POST https://api.anthropic.com/v1/messages "HTTP/1.1 200 OK"

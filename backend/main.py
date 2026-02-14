@@ -187,57 +187,65 @@ async def chat(request: ChatRequest):
     memory = load_memory()
 
     # CHECK FOR APPROVAL FIRST - before calling Claude
+    # STRICT CHECK: Only trigger cleanup if the EXACT cleanup preview phrase is in the last message
+    # This prevents accidental cleanup when user says "yes" to unrelated questions
     if request.message.lower() in ["yes", "yes, organize them", "organize them", "do it", "proceed", "go ahead", "yes organize them", "yes, delete them", "delete them", "yes delete them", "yes, clean them", "clean them"]:
         last_content = memory["conversations"][-1].get("content", "").lower() if memory["conversations"] else ""
         logger.info(f"APPROVAL DETECTED - checking last content: {last_content[:100]}")
 
-        # Detect which location was being cleaned
-        target_path = None
-        location_name = None
-        if "download" in last_content:
-            target_path = DOWNLOADS_PATH
-            location_name = "Downloads"
-        elif "desktop" in last_content:
-            target_path = DESKTOP_PATH
-            location_name = "Desktop"
-        elif "screenshot" in last_content:
-            target_path = DESKTOP_PATH  # Screenshots are on Desktop by default
-            location_name = "Screenshots"
+        # CRITICAL: Only proceed if this was a cleanup preview (contains the exact confirmation prompt)
+        is_cleanup_preview = "say **'yes'** to proceed" in last_content or "say **'yes, organize them'**" in last_content
 
-        if target_path and ("file" in last_content or "duplicate" in last_content or "trash" in last_content or "sort" in last_content or "clean" in last_content):
-            logger.info(f"EXECUTING CLEANUP on {location_name} - User approved")
-            # Do both: organize files AND remove duplicates
-            org_result = organize_folder(target_path, preview=False)
-            dup_result = find_duplicates_in(target_path, preview=False)
-            logger.info(f"CLEANUP COMPLETE: {len(org_result.files_moved)} organized, {len(dup_result.duplicates)} duplicates removed")
+        if not is_cleanup_preview:
+            logger.info("NOT a cleanup preview - passing to Claude instead")
+        else:
+            # Detect which location was being cleaned
+            target_path = None
+            location_name = None
+            if "download" in last_content:
+                target_path = DOWNLOADS_PATH
+                location_name = "Downloads"
+            elif "desktop" in last_content:
+                target_path = DESKTOP_PATH
+                location_name = "Desktop"
+            elif "screenshot" in last_content:
+                target_path = DESKTOP_PATH  # Screenshots are on Desktop by default
+                location_name = "Screenshots"
 
-            parts = []
-            if org_result.files_moved:
-                parts.append(f"**{len(org_result.files_moved)} files** sorted into folders")
-            if dup_result.duplicates:
-                parts.append(f"**{len(dup_result.duplicates)} duplicates** moved to Trash ({dup_result.total_size_mb:.1f} MB)")
+            if target_path:
+                logger.info(f"EXECUTING CLEANUP on {location_name} - User approved cleanup preview")
+                # Do both: organize files AND remove duplicates
+                org_result = organize_folder(target_path, preview=False)
+                dup_result = find_duplicates_in(target_path, preview=False)
+                logger.info(f"CLEANUP COMPLETE: {len(org_result.files_moved)} organized, {len(dup_result.duplicates)} duplicates removed")
 
-            if parts:
-                assistant_message = "Done! " + " and ".join(parts) + f".\n\nYour {location_name} is clean. Check Trash if you need to restore anything."
-            else:
-                assistant_message = f"Nothing to do - your {location_name} was already clean."
+                parts = []
+                if org_result.files_moved:
+                    parts.append(f"**{len(org_result.files_moved)} files** sorted into folders")
+                if dup_result.duplicates:
+                    parts.append(f"**{len(dup_result.duplicates)} duplicates** moved to Trash ({dup_result.total_size_mb:.1f} MB)")
 
-            memory["conversations"].append({
-                "role": "user",
-                "content": request.message,
-                "timestamp": datetime.now().isoformat()
-            })
-            memory["conversations"].append({
-                "role": "assistant",
-                "content": assistant_message,
-                "timestamp": datetime.now().isoformat()
-            })
-            save_memory(memory)
+                if parts:
+                    assistant_message = "Done! " + " and ".join(parts) + f".\n\nYour {location_name} is clean. Check Trash if you need to restore anything."
+                else:
+                    assistant_message = f"Nothing to do - your {location_name} was already clean."
 
-            return ChatResponse(
-                response=assistant_message,
-                timestamp=datetime.now().isoformat()
-            )
+                memory["conversations"].append({
+                    "role": "user",
+                    "content": request.message,
+                    "timestamp": datetime.now().isoformat()
+                })
+                memory["conversations"].append({
+                    "role": "assistant",
+                    "content": assistant_message,
+                    "timestamp": datetime.now().isoformat()
+                })
+                save_memory(memory)
+
+                return ChatResponse(
+                    response=assistant_message,
+                    timestamp=datetime.now().isoformat()
+                )
 
     # Build conversation history for context
     messages = []
