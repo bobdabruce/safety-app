@@ -49,15 +49,18 @@ app.add_middleware(
 # Initialize Claude client
 client = Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
-# Simple file-based memory (will upgrade to proper DB later)
-MEMORY_FILE = Path(__file__).parent / "memory.json"
+# Data directory — uses /app/data on Railway (persistent volume), local path otherwise
+DATA_DIR = Path(os.getenv("DATA_DIR", str(Path(__file__).parent.parent)))
+DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+MEMORY_FILE = DATA_DIR / "memory.json"
 DOWNLOADS_PATH = Path.home() / "Downloads"
 DESKTOP_PATH = Path.home() / "Desktop"
-SCREENSHOTS_PATH = Path.home() / "Desktop"  # macOS default, screenshots go to Desktop
-UPLOADS_PATH = Path(__file__).parent.parent / "uploads"
-UPLOADS_PATH.mkdir(exist_ok=True)  # Create uploads folder if it doesn't exist
+SCREENSHOTS_PATH = Path.home() / "Desktop"
+UPLOADS_PATH = DATA_DIR / "uploads"
+UPLOADS_PATH.mkdir(exist_ok=True)
 
-LIBRARY_PATH = Path(__file__).parent.parent / "library"
+LIBRARY_PATH = DATA_DIR / "library"
 LIBRARY_PATH.mkdir(exist_ok=True)
 
 def load_memory():
@@ -1627,7 +1630,7 @@ import asyncio
 
 async_client = AsyncAnthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
-OHS_DATA_DIR = Path(__file__).parent.parent / "ohs_data"
+OHS_DATA_DIR = DATA_DIR / "ohs_data"
 OHS_DATA_DIR.mkdir(exist_ok=True)
 OHS_UPLOADS_DIR = OHS_DATA_DIR / "uploads"
 OHS_UPLOADS_DIR.mkdir(exist_ok=True)
@@ -1962,7 +1965,7 @@ async def ohs_chat(body: dict):
     return await ohs_sse_stream("claude-haiku-4-5-20251001", 2000, ohs_build_system(cid, last_query), messages)
 
 # ─── Floating Notes API ───────────────────────────────────────────────────────
-NOTES_FILE = Path(__file__).parent.parent / "notes.txt"
+NOTES_FILE = DATA_DIR / "notes.txt"
 
 @app.get("/api/notes")
 async def get_notes():
