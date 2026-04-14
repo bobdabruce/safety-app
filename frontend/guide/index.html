@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="រៀន AI">
+<meta name="theme-color" content="#6d28d9">
+<link rel="manifest" href="/guide/manifest.json">
+<title>រៀន AI</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  :root {
+    --bg: #0f172a;
+    --card: #1e293b;
+    --border: #334155;
+    --accent: #6d28d9;
+    --accent2: #7c3aed;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --radius: 16px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, 'Khmer OS', 'Khmer OS System', sans-serif;
+    font-size: 17px;
+    line-height: 1.6;
+    overflow: hidden;
+  }
+
+  /* ── Screens ── */
+  .screen { position: absolute; inset: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; display: none; flex-direction: column; padding-bottom: 80px; }
+  .screen.active { display: flex; }
+
+  /* ── Top bar ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bg);
+    padding: 52px 20px 12px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .topbar h1 { font-size: 22px; font-weight: 700; flex: 1; }
+  .lang-btn {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); padding: 6px 14px; border-radius: 20px;
+    font-size: 14px; cursor: pointer;
+  }
+
+  /* ── Bottom nav ── */
+  .nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: rgba(15,23,42,0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    display: flex;
+    padding-bottom: env(safe-area-inset-bottom);
+    z-index: 100;
+  }
+  .nav-btn {
+    flex: 1; padding: 10px 4px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; border: none; background: none;
+    color: var(--muted); font-size: 11px;
+    transition: color 0.2s;
+  }
+  .nav-btn.active { color: var(--accent2); }
+  .nav-btn .icon { font-size: 22px; }
+
+  /* ── Cards ── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px; margin: 0 16px 12px;
+  }
+  .card-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .card-sub { font-size: 14px; color: var(--muted); }
+
+  /* ── Progress ring ── */
+  .progress-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    padding: 20px 20px 8px;
+  }
+  .ring-wrap { position: relative; width: 110px; height: 110px; margin-bottom: 12px; }
+  .ring-wrap svg { transform: rotate(-90deg); }
+  .ring-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+  .ring-fill { fill: none; stroke: var(--accent2); stroke-width: 8; stroke-linecap: round;
+    transition: stroke-dashoffset 0.6s ease; }
+  .ring-text { position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; }
+  .ring-pct { font-size: 24px; font-weight: 700; }
+  .ring-label { font-size: 11px; color: var(--muted); }
+
+  /* ── Month tabs ── */
+  .month-tabs { display: flex; gap: 8px; padding: 0 16px 12px; overflow-x: auto; }
+  .month-tab {
+    flex-shrink: 0; padding: 8px 16px; border-radius: 20px;
+    border: 1px solid var(--border); background: none;
+    color: var(--muted); font-size: 14px; cursor: pointer;
+    white-space: nowrap;
+  }
+  .month-tab.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+  /* ── Week card ── */
+  .week-card {
+    margin: 0 16px 10px; border-radius: var(--radius);
+    border: 1px solid var(--border); overflow: hidden;
+    background: var(--card);
+  }
+  .week-header {
+    padding: 14px 16px; display: flex; align-items: center; gap: 10px;
+    cursor: pointer;
+  }
+  .week-icon { font-size: 22px; }
+  .week-info { flex: 1; }
+  .week-title { font-size: 15px; font-weight: 600; }
+  .week-progress { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .week-arrow { color: var(--muted); transition: transform 0.2s; font-size: 14px; }
+  .week-card.open .week-arrow { transform: rotate(90deg); }
+
+  .week-lessons { display: none; border-top: 1px solid var(--border); }
+  .week-card.open .week-lessons { display: block; }
+
+  .lesson-row {
+    padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+    cursor: pointer; border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .lesson-row:last-child { border-bottom: none; }
+  .lesson-row:active { background: rgba(109,40,217,0.1); }
+  .lesson-check {
+    width: 26px; height: 26px; border-radius: 50%;
+    border: 2px solid var(--border); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; transition: all 0.2s;
+  }
+  .lesson-check.done { background: var(--green); border-color: var(--green); }
+  .lesson-info { flex: 1; }
+  .lesson-title { font-size: 15px; }
+  .lesson-meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .lesson-arrow { color: var(--muted); font-size: 13px; }
+
+  /* ── Lesson screen ── */
+  .lesson-topbar {
+    position: sticky; top: 0; z-index: 10;
+    background: var(--bg); padding: 52px 16px 12px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid var(--border);
+  }
+  .back-btn {
+    background: var(--card); border: 1px solid var(--border);
+    color: var(--text); padding: 8px 14px; border-radius: 10px;
+    font-size: 15px; cursor: pointer; white-space: nowrap;
+  }
+  .lesson-topbar h2 { font-size: 17px; font-weight: 600; flex: 1; line-height: 1.3; }
+
+  .lesson-body { padding: 20px 16px; }
+  .lesson-duration {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--card); border: 1px solid var(--border);
+    padding: 5px 12px; border-radius: 20px; font-size: 13px;
+    color: var(--muted); margin-bottom: 18px;
+  }
+  .lesson-content { font-size: 17px; line-height: 1.75; }
+  .lesson-content h3 { font-size: 18px; font-weight: 600; margin: 20px 0 10px; color: var(--accent2); }
+  .lesson-content p { margin-bottom: 14px; }
+  .lesson-content ul, .lesson-content ol { padding-left: 22px; margin-bottom: 14px; }
+  .lesson-content li { margin-bottom: 8px; }
+  .lesson-content .step {
+    background: var(--card); border-left: 3px solid var(--accent2);
+    padding: 12px 14px; border-radius: 0 10px 10px 0;
+    margin-bottom: 10px; font-size: 16px;
+  }
+  .lesson-content .tip {
+    background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3);
+    padding: 12px 14px; border-radius: 10px; margin: 14px 0;
+    font-size: 15px;
+  }
+  .lesson-content .tip::before { content: "💡 "; }
+
+  .complete-btn {
+    width: 100%; padding: 16px; margin-top: 24px;
+    background: var(--accent); border: none; border-radius: var(--radius);
+    color: white; font-size: 18px; font-weight: 600; cursor: pointer;
+    transition: background 0.2s;
+  }
+  .complete-btn:active { background: var(--accent2); }
+  .complete-btn.done { background: var(--green); }
+
+  /* ── Tools screen ── */
+  .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 16px; }
+  .tool-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 14px; text-align: center;
+    text-decoration: none; color: var(--text);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    cursor: pointer;
+  }
+  .tool-card:active { border-color: var(--accent2); }
+  .tool-icon { font-size: 36px; }
+  .tool-name { font-size: 15px; font-weight: 600; }
+  .tool-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+
+  /* ── Settings screen ── */
+  .setting-row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px; background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); margin: 0 16px 10px;
+  }
+  .setting-label { font-size: 16px; }
+  .setting-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .toggle {
+    width: 50px; height: 28px; background: var(--border); border-radius: 14px;
+    position: relative; cursor: pointer; transition: background 0.2s;
+    border: none; flex-shrink: 0;
+  }
+  .toggle.on { background: var(--green); }
+  .toggle::after {
+    content: ''; position: absolute; width: 22px; height: 22px;
+    background: white; border-radius: 50%; top: 3px; left: 3px;
+    transition: transform 0.2s;
+  }
+  .toggle.on::after { transform: translateX(22px); }
+
+  /* ── Celebration ── */
+  .celebrate {
+    position: fixed; inset: 0; z-index: 200; display: none;
+    align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.7);
+  }
+  .celebrate.show { display: flex; }
+  .celebrate-box {
+    background: var(--card); border: 1px solid var(--accent2);
+    border-radius: 24px; padding: 32px 24px; text-align: center;
+    max-width: 280px; margin: 20px;
+  }
+  .celebrate-emoji { font-size: 64px; margin-bottom: 16px; }
+  .celebrate-title { font-size: 22px; font-weight: 700; margin-bottom: 8px; }
+  .celebrate-sub { font-size: 16px; color: var(--muted); margin-bottom: 20px; }
+  .celebrate-ok {
+    width: 100%; padding: 14px; background: var(--accent);
+    border: none; border-radius: 12px; color: white;
+    font-size: 17px; font-weight: 600; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HOME SCREEN ── -->
+<div class="screen active" id="screen-home">
+  <div class="topbar">
+    <h1 id="home-title">រៀន AI 🤖</h1>
+    <button class="lang-btn" onclick="toggleLang()">EN</button>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="ring-wrap">
+      <svg width="110" height="110" viewBox="0 0 110 110">
+        <circle class="ring-bg" cx="55" cy="55" r="46"/>
+        <circle class="ring-fill" id="ringFill" cx="55" cy="55" r="46"
+          stroke-dasharray="289" stroke-dashoffset="289"/>
+      </svg>
+      <div class="ring-text">
+        <span class="ring-pct" id="ringPct">0%</span>
+        <span class="ring-label" id="ringLabel">រួចហើយ</span>
+      </div>
+    </div>
+    <p id="home-sub" style="font-size:14px;color:var(--muted);text-align:center"></p>
+  </div>
+
+  <div class="month-tabs" id="monthTabs"></div>
+  <div id="weekList"></div>
+</div>
+
+<!-- ── LESSON SCREEN ── -->
+<div class="screen" id="screen-lesson">
+  <div class="lesson-topbar">
+    <button class="back-btn" onclick="showScreen('home')" id="backBtn">← ត្រឡប់</button>
+    <h2 id="lessonTitle"></h2>
+  </div>
+  <div class="lesson-body">
+    <div class="lesson-duration" id="lessonDuration"></div>
+    <div class="lesson-content" id="lessonContent"></div>
+    <button class="complete-btn" id="completeBtn" onclick="completeLesson()"></button>
+  </div>
+</div>
+
+<!-- ── TOOLS SCREEN ── -->
+<div class="screen" id="screen-tools">
+  <div class="topbar">
+    <h1 id="tools-title">ឧបករណ៍ AI 🛠️</h1>
+    <button class="lang-btn" onclick="toggleLang()">EN</button>
+  </div>
+  <div class="tools-grid" id="toolsGrid"></div>
+</div>
+
+<!-- ── SETTINGS SCREEN ── -->
+<div class="screen" id="screen-settings">
+  <div class="topbar">
+    <h1 id="settings-title">ការកំណត់ ⚙️</h1>
+    <button class="lang-btn" onclick="toggleLang()">EN</button>
+  </div>
+  <div class="setting-row">
+    <div>
+      <div class="setting-label" id="notif-label">ការជូនដំណឹងប្រចាំថ្ងៃ</div>
+      <div class="setting-sub" id="notif-sub">រំឭកអ្នករៀនរាល់ថ្ងៃ</div>
+    </div>
+    <button class="toggle" id="notifToggle" onclick="toggleNotif()"></button>
+  </div>
+  <div class="setting-row">
+    <div>
+      <div class="setting-label" id="lang-label">ភាសា</div>
+      <div class="setting-sub" id="lang-sub">ភាសាខ្មែរ ឬ English</div>
+    </div>
+    <button class="lang-btn" onclick="toggleLang()" id="langToggleBtn">EN</button>
+  </div>
+  <div class="setting-row" style="cursor:pointer" onclick="resetProgress()">
+    <div>
+      <div class="setting-label" id="reset-label" style="color:#ef4444">លុបចោលវឌ្ឍនភាព</div>
+      <div class="setting-sub" id="reset-sub">ចាប់ផ្តើមម្តងទៀត</div>
+    </div>
+    <span style="color:var(--muted)">›</span>
+  </div>
+  <div style="padding:20px 16px;text-align:center;color:var(--muted);font-size:13px">
+    រៀន AI · v1.1 · Made with ❤️
+  </div>
+</div>
+
+<!-- ── BOTTOM NAV ── -->
+<div class="nav">
+  <button class="nav-btn active" id="nav-home" onclick="showScreen('home')">
+    <span class="icon">🏠</span>
+    <span id="nav-home-label">ផ្ទះ</span>
+  </button>
+  <button class="nav-btn" id="nav-tools" onclick="showScreen('tools')">
+    <span class="icon">🛠️</span>
+    <span id="nav-tools-label">ឧបករណ៍</span>
+  </button>
+  <button class="nav-btn" id="nav-settings" onclick="showScreen('settings')">
+    <span class="icon">⚙️</span>
+    <span id="nav-settings-label">ការកំណត់</span>
+  </button>
+</div>
+
+<!-- ── CELEBRATION POPUP ── -->
+<div class="celebrate" id="celebrate">
+  <div class="celebrate-box">
+    <div class="celebrate-emoji" id="celebEmoji">🎉</div>
+    <div class="celebrate-title" id="celebTitle"></div>
+    <div class="celebrate-sub" id="celebSub"></div>
+    <button class="celebrate-ok" id="celebOk" onclick="closeCelebrate()"></button>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════
+// LANGUAGE
+// ══════════════════════════════════════════════
+let lang = localStorage.getItem('lang') || 'kh';
+
+const UI = {
+  kh: {
+    home: 'រៀន AI 🤖', tools: 'ឧបករណ៍ AI 🛠️', settings: 'ការកំណត់ ⚙️',
+    navHome: 'ផ្ទះ', navTools: 'ឧបករណ៍', navSettings: 'ការកំណត់',
+    done: 'រួចហើយ', back: '← ត្រឡប់', complete: '✅ រួចហើយ!',
+    alreadyDone: '✅ បានរួចហើយ', weeksOf: 'ជំហាន', lessonOf: 'មេរៀន',
+    notifLabel: 'ការជូនដំណឹងប្រចាំថ្ងៃ', notifSub: 'រំឭកអ្នករៀនរាល់ថ្ងៃ',
+    langLabel: 'ភាសា', langSub: 'ភាសាខ្មែរ ឬ English',
+    resetLabel: 'លុបចោលវឌ្ឍនភាព', resetSub: 'ចាប់ផ្តើមម្តងទៀត',
+    resetConfirm: 'តើអ្នកចង់ចាប់ផ្តើមម្តងទៀតទេ?',
+    celebOk: 'អស្ចារ្យណាស់! 💪',
+    minLabel: 'នាទី',
+  },
+  en: {
+    home: 'Learn AI 🤖', tools: 'AI Tools 🛠️', settings: 'Settings ⚙️',
+    navHome: 'Home', navTools: 'Tools', navSettings: 'Settings',
+    done: 'Done', back: '← Back', complete: '✅ Mark Complete!',
+    alreadyDone: '✅ Completed', weeksOf: 'step', lessonOf: 'lesson',
+    notifLabel: 'Daily Reminder', notifSub: 'Remind you to learn every day',
+    langLabel: 'Language', langSub: 'Khmer or English',
+    resetLabel: 'Reset Progress', resetSub: 'Start over from the beginning',
+    resetConfirm: 'Reset all your progress?',
+    celebOk: 'Awesome! 💪',
+    minLabel: 'min',
+  }
+};
+
+function t(key) { return UI[lang][key] || UI.en[key]; }
+
+function toggleLang() {
+  lang = lang === 'kh' ? 'en' : 'kh';
+  localStorage.setItem('lang', lang);
+  applyLang();
+  renderHome();
+  renderTools();
+}
+
+function applyLang() {
+  const isEn = lang === 'en';
+  document.documentElement.lang = lang;
+  document.querySelectorAll('.lang-btn').forEach(b => b.textContent = isEn ? 'ខ្មែរ' : 'EN');
+  document.getElementById('home-title').textContent = t('home');
+  document.getElementById('tools-title').textContent = t('tools');
+  document.getElementById('settings-title').textContent = t('settings');
+  document.getElementById('nav-home-label').textContent = t('navHome');
+  document.getElementById('nav-tools-label').textContent = t('navTools');
+  document.getElementById('nav-settings-label').textContent = t('navSettings');
+  document.getElementById('notif-label').textContent = t('notifLabel');
+  document.getElementById('notif-sub').textContent = t('notifSub');
+  document.getElementById('lang-label').textContent = t('langLabel');
+  document.getElementById('lang-sub').textContent = t('langSub');
+  document.getElementById('reset-label').textContent = t('resetLabel');
+  document.getElementById('reset-sub').textContent = t('resetSub');
+  document.getElementById('ringLabel').textContent = t('done');
+  document.getElementById('langToggleBtn').textContent = isEn ? 'ខ្មែរ' : 'EN';
+  if (document.getElementById('screen-lesson').classList.contains('active')) {
+    document.getElementById('backBtn').textContent = t('back');
+  }
+}
+
+// ══════════════════════════════════════════════
+// CURRICULUM DATA
+// ══════════════════════════════════════════════
+const curriculum = [
+  // ── MONTH 1 ────────────────────────────────
+  {
+    id: 1,
+    kh: 'ខែទី ១ — ចាប់ផ្តើម បង្កើត',
+    en: 'Month 1 — Start Creating',
+    icon: '🎬',
+    weeks: [
+      // ── Week 1: Quick Setup ──────────────────
+      {
+        id: '1-1', icon: '🌱',
+        kh: 'Setup រហ័ស', en: 'Quick Setup',
+        lessons: [
+          {
+            id: 'L1-1-1',
+            kh: 'AI ពន្យល់ដោយភាសាសាមញ្ញ', en: 'AI explained simply',
+            mins: 5,
+            content: {
+              kh: `<h3>AI គឺជាអ្វី?</h3>
+<p>AI មានន័យថា <strong>បញ្ញាសិប្បនិម្មិត</strong> — ឬក្នុងភាសាសាមញ្ញ: <strong>ដូចជាខួរក្បាលរបស់កុំព្យូទ័រ ប៉ុន្តែ វាអាចរៀនដោយខ្លួនឯង។</strong></p>
+<p>គិតថា AI ដូចជាមិត្តស្និទ្ធ ដែល:</p>
+<ul>
+  <li>ចេះភាសាខ្មែរ ភាសាអង់គ្លេស និងភាសាជាច្រើន</li>
+  <li>អាចជួយអ្នករចនាគំនូរ ឬរូបភាព</li>
+  <li>អាចបកប្រែ ឬសរសេរអត្ថបទជូន</li>
+  <li>ឆ្លើយសំណួររបស់អ្នក ២៤ ម៉ោង/ថ្ងៃ</li>
+</ul>
+<div class="tip">AI មិនមែនជាមនុស្សទេ — ប៉ុន្តែ វាអាចជួយអ្នកបានច្រើន!</div>
+<h3>អ្នកប្រើ AI រួចហើយ ដោយមិនដឹងខ្លួន:</h3>
+<ul>
+  <li>🎵 TikTok ណែនាំវីដេអូឱ្យអ្នក → AI</li>
+  <li>📸 ការស្គាល់មុខក្នុង iPhone → AI</li>
+  <li>⌨️ Auto-correct ពេលវាយ → AI</li>
+  <li>🗺️ Google Maps ផ្លូវ → AI</li>
+</ul>`,
+              en: `<h3>What is AI?</h3>
+<p>AI stands for <strong>Artificial Intelligence</strong> — in simple words: <strong>a computer that can learn and think on its own.</strong></p>
+<p>Think of AI like a very helpful friend who:</p>
+<ul>
+  <li>Speaks Khmer, English, and many languages</li>
+  <li>Can help design pictures and images</li>
+  <li>Can translate or write text for you</li>
+  <li>Answers your questions 24 hours a day</li>
+</ul>
+<div class="tip">AI is not a person — but it can help you a LOT!</div>
+<h3>You already use AI every day:</h3>
+<ul>
+  <li>🎵 TikTok recommends videos → AI</li>
+  <li>📸 Face recognition on iPhone → AI</li>
+  <li>⌨️ Auto-correct when you type → AI</li>
+  <li>🗺️ Google Maps directions → AI</li>
+</ul>`
+            }
+          },
+          {
+            id: 'L1-1-2',
+            kh: 'AI ល្អ AI អាក្រក់ — ដឹងព្រំដែន', en: 'Good AI Bad AI — Know the limits',
+            mins: 5,
+            content: {
+              kh: `<h3>AI ជួយអ្វីបាន?</h3>
+<ul>
+  <li>✅ ជួយសរសេរ caption ជាភាសាខ្មែរ ឬ អង់គ្លេស</li>
+  <li>✅ ជួយបកប្រែ</li>
+  <li>✅ ជួយគិតគំនិតចំពោះការ post វីដេអូ</li>
+  <li>✅ ជួយឆ្លើយសំណួរ</li>
+  <li>✅ ជួយរចនារូបភាព ឬ thumbnail</li>
+</ul>
+<h3>AI ធ្វើអ្វីមិនបាន?</h3>
+<ul>
+  <li>❌ មិនអាចដឹងពិតប្រាកដ ១០០%</li>
+  <li>❌ ពេលខ្លះ AI ប្រាប់ខុស — ត្រូវពិនិត្យ</li>
+  <li>❌ មិនអាចជំនួសការរៀនសូត្ររបស់អ្នក</li>
+</ul>
+<div class="tip">AI ជួយអ្នក ប៉ុន្តែ <strong>អ្នក</strong>ជាអ្នកសម្រេច!</div>`,
+              en: `<h3>What AI can help you with:</h3>
+<ul>
+  <li>✅ Writing captions in Khmer or English</li>
+  <li>✅ Translating text</li>
+  <li>✅ Coming up with ideas for videos</li>
+  <li>✅ Answering your questions</li>
+  <li>✅ Designing images or thumbnails</li>
+</ul>
+<h3>What AI cannot do:</h3>
+<ul>
+  <li>❌ It's not always 100% accurate</li>
+  <li>❌ Sometimes AI gets things wrong — always check</li>
+  <li>❌ It can't replace your own learning</li>
+</ul>
+<div class="tip">AI helps you — but <strong>YOU</strong> make the decisions!</div>`
+            }
+          },
+          {
+            id: 'L1-2-1',
+            kh: 'បង្កើត Google Account', en: 'Create a Google Account',
+            mins: 10,
+            content: {
+              kh: `<h3>ហេតុអ្វីត្រូវការ Google Account?</h3>
+<p>Google Account គឺជា <strong>គ្រាប់សោ</strong> ទៅ apps ទាំងអស់:</p>
+<ul>
+  <li>📧 Gmail — email</li>
+  <li>📸 Google Photos — រូបភាព free ឥតលប</li>
+  <li>🤖 ChatGPT, Gemini — login</li>
+  <li>▶️ YouTube — upload វីដេអូ</li>
+  <li>🎨 Canva — design</li>
+</ul>
+<h3>ជំហានបង្កើត Google Account:</h3>
+<div class="step">1️⃣ បើក Safari → វាយ <strong>accounts.google.com</strong></div>
+<div class="step">2️⃣ ចុច "Create account" → "For myself"</div>
+<div class="step">3️⃣ វាយ ឈ្មោះ First / Last Name</div>
+<div class="step">4️⃣ ជ្រើស Date of birth → Gender</div>
+<div class="step">5️⃣ ជ្រើស Gmail address (ឈ្មោះ + លេខ)</div>
+<div class="step">6️⃣ បង្កើត password ខ្លាំង (8+ តួអក្សរ + លេខ)</div>
+<div class="step">7️⃣ ចុច Next → Agree → Done! ✅</div>
+<div class="tip">សរសេរ email + password ក្នុងដៀរ ហើយរក្សាទុក!</div>`,
+              en: `<h3>Why do you need a Google Account?</h3>
+<p>A Google Account is your <strong>key to everything</strong>:</p>
+<ul>
+  <li>📧 Gmail — email</li>
+  <li>📸 Google Photos — free unlimited photo storage</li>
+  <li>🤖 ChatGPT, Gemini — login</li>
+  <li>▶️ YouTube — upload videos</li>
+  <li>🎨 Canva — design</li>
+</ul>
+<h3>Steps to create a Google Account:</h3>
+<div class="step">1️⃣ Open Safari → type <strong>accounts.google.com</strong></div>
+<div class="step">2️⃣ Tap "Create account" → "For myself"</div>
+<div class="step">3️⃣ Type your First and Last Name</div>
+<div class="step">4️⃣ Choose Date of birth and Gender</div>
+<div class="step">5️⃣ Choose a Gmail address (name + numbers)</div>
+<div class="step">6️⃣ Create a strong password (8+ letters + numbers)</div>
+<div class="step">7️⃣ Tap Next → Agree → Done! ✅</div>
+<div class="tip">Write your email + password in a notebook and keep it safe!</div>`
+            }
+          }
+        ]
+      },
+      // ── Week 2: Film + Edit NOW! ─────────────
+      {
+        id: '1-2', icon: '🎬',
+        kh: 'ថត + Edit ឥឡូវ!', en: 'Film + Edit NOW!',
+        lessons: [
+          {
+            id: 'L1-2-2',
+            kh: 'iPhone Storage — ទំហំទំនេរ', en: 'iPhone Storage — Free up space',
+            mins: 8,
+            content: {
+              kh: `<h3>ហេតុអ្វី Storage សំខាន់?</h3>
+<p>ដើម្បី download apps និង record វីដេអូ អ្នកត្រូវការ <strong>ទំហំទំនេរ</strong> ក្នុង iPhone។</p>
+<h3>ពិនិត្យ Storage:</h3>
+<div class="step">1️⃣ ចុច Settings (⚙️) → General</div>
+<div class="step">2️⃣ ចុច "iPhone Storage"</div>
+<div class="step">3️⃣ មើលតួលេខ — ត្រូវការ 5GB+ ទំនេរ</div>
+<h3>ប្រសិន Storage ពេញ — ធ្វើដូចខាងក្រោម:</h3>
+<ul>
+  <li>🗑️ លុប apps ដែលមិនប្រើ</li>
+  <li>📸 Upload photos ទៅ Google Photos → លុបចេញពី phone</li>
+  <li>📹 Save videos ទៅ Google Drive</li>
+</ul>
+<div class="tip">Google Photos ជួយ save រូបភាពទាំងអស់ FREE ដោយស្វ័យប្រវត្តិ!</div>`,
+              en: `<h3>Why does storage matter?</h3>
+<p>To download apps and record videos, you need free <strong>Storage</strong> on your iPhone.</p>
+<h3>Check your Storage:</h3>
+<div class="step">1️⃣ Tap Settings (⚙️) → General</div>
+<div class="step">2️⃣ Tap "iPhone Storage"</div>
+<div class="step">3️⃣ Look at the numbers — you need 5GB+ free</div>
+<h3>If storage is full — do this:</h3>
+<ul>
+  <li>🗑️ Delete apps you don't use</li>
+  <li>📸 Upload photos to Google Photos → delete from phone</li>
+  <li>📹 Save videos to Google Drive</li>
+</ul>
+<div class="tip">Google Photos automatically saves ALL your photos for FREE!</div>`
+            }
+          },
+          {
+            id: 'L1-2-3',
+            kh: 'Wi-Fi vs. Data — ដឹង​ភាព​ខុស​គ្នា', en: 'Wi-Fi vs. Data — Know the difference',
+            mins: 5,
+            content: {
+              kh: `<h3>Wi-Fi vs. Mobile Data</h3>
+<p><strong>Wi-Fi 📶</strong> — ភ្ជាប់ router ក្នុងផ្ទះ ឬ ហាងកាហ្វេ</p>
+<ul>
+  <li>✅ ឥតគិតថ្លៃ (ប្រើអស់ប៉ុណ្ណា ក៏ OK)</li>
+  <li>✅ ល្បឿនលឿន</li>
+  <li>❌ ប្រើបានតែនៅក្បែរ router</li>
+</ul>
+<p><strong>Mobile Data 📡</strong> — ប្រើ internet គ្រប់ទីកន្លែង</p>
+<ul>
+  <li>✅ ប្រើបានគ្រប់ទីកន្លែង</li>
+  <li>❌ ប្រើ data ផ្ទាល់ (អាចអស់)</li>
+  <li>❌ អាចថ្លៃ</li>
+</ul>
+<div class="tip">ពេល download apps ធំ ឬ upload វីដេអូ — ប្រើ Wi-Fi ជានិច្ច!</div>`,
+              en: `<h3>Wi-Fi vs. Mobile Data</h3>
+<p><strong>Wi-Fi 📶</strong> — connects to a router at home or a café</p>
+<ul>
+  <li>✅ Free (use as much as you want)</li>
+  <li>✅ Fast speed</li>
+  <li>❌ Only works near the router</li>
+</ul>
+<p><strong>Mobile Data 📡</strong> — uses internet anywhere</p>
+<ul>
+  <li>✅ Works anywhere</li>
+  <li>❌ Uses your data plan (can run out)</li>
+  <li>❌ Can be expensive</li>
+</ul>
+<div class="tip">When downloading large apps or uploading videos — always use Wi-Fi!</div>`
+            }
+          },
+          {
+            id: 'L1-4-1',
+            kh: 'ថតវីដេអូ ល្អ ជាមួយ iPhone 11', en: 'Shoot great video with iPhone 11',
+            mins: 10,
+            content: {
+              kh: `<h3>iPhone 11 = កាមេរ៉ា A+</h3>
+<p>iPhone 11 មានកាមេរ៉ាដ៏ល្អ — ល្អជាង cameras ថ្លៃៗជាច្រើន!</p>
+<h3>Setting ល្អបំផុតសម្រាប់ TikTok:</h3>
+<div class="step">1️⃣ បើក Camera → ជ្រើស <strong>VIDEO</strong></div>
+<div class="step">2️⃣ ផ្ដោតទៅ <strong>VERTICAL (ឈរ)</strong> — TikTok ចូលចិត្ត 9:16</div>
+<div class="step">3️⃣ ចុច screen ដើម្បី focus លើ subject</div>
+<div class="step">4️⃣ ចុច sun icon 🌞 → drag ចុះ ដើម្បីកាត់ brightness</div>
+<h3>ល្បិចថតល្អ:</h3>
+<ul>
+  <li>💡 ប្រើ <strong>natural light</strong> — ថតនៅជិតបង្អួច</li>
+  <li>🔇 ថតនៅកន្លែង <strong>ស្ងាត់</strong> ដូច្នេះ sound ច្បាស់</li>
+  <li>📐 ដាក់ subject <strong>ចំកណ្ដាល</strong> ឬ ១/៣ ពីគែម</li>
+  <li>🎯 ចៀសវាង <strong>ញ័រ</strong> — ប្រើ table ឬ ដៃម្ខាងទៀតទ្រ</li>
+</ul>
+<div class="tip">ពន្លឺ = ១ ក្នុង ៣ ជំហានដ៏សំខាន់! ពន្លឺខ្សោយ = video ស្អុ</div>`,
+              en: `<h3>iPhone 11 = Professional camera</h3>
+<p>iPhone 11 has an excellent camera — better than many expensive cameras!</p>
+<h3>Best settings for TikTok:</h3>
+<div class="step">1️⃣ Open Camera → choose <strong>VIDEO</strong></div>
+<div class="step">2️⃣ Hold phone <strong>VERTICAL</strong> — TikTok uses 9:16</div>
+<div class="step">3️⃣ Tap the screen to focus on your subject</div>
+<div class="step">4️⃣ Tap the sun icon 🌞 → drag down to reduce brightness</div>
+<h3>Tips for great shots:</h3>
+<ul>
+  <li>💡 Use <strong>natural light</strong> — film near a window</li>
+  <li>🔇 Film in a <strong>quiet place</strong> so sound is clear</li>
+  <li>📐 Put your subject <strong>in the center</strong> or 1/3 from the edge</li>
+  <li>🎯 Avoid <strong>shaking</strong> — use a table or rest your arm</li>
+</ul>
+<div class="tip">Lighting = #1 most important thing! Bad light = bad video</div>`
+            }
+          },
+          {
+            id: 'L2-1-1',
+            kh: 'CapCut — Download + UI ដំបូង', en: 'CapCut — Download + first look',
+            mins: 10,
+            content: {
+              kh: `<h3>CapCut គឺជាអ្វី?</h3>
+<p>CapCut គឺជា app <strong>កែ video ឥតគិតថ្លៃ</strong> — ល្អបំផុតសម្រាប់ TikTok!</p>
+<h3>Download CapCut:</h3>
+<div class="step">1️⃣ App Store → ស្វែងរក "CapCut"</div>
+<div class="step">2️⃣ Download (ស្ម័គ្រ)</div>
+<div class="step">3️⃣ Sign in ជាមួយ Google Account</div>
+<h3>UI ដំបូង — ស្គាល់ screen:</h3>
+<ul>
+  <li>➕ <strong>New Project</strong> — ចាប់ផ្តើម project ថ្មី</li>
+  <li>✂️ <strong>Timeline</strong> — ខ្សែ video / audio</li>
+  <li>🎵 <strong>Audio</strong> — បន្ថែម music</li>
+  <li>💬 <strong>Text</strong> — បន្ថែម caption</li>
+  <li>⚡ <strong>Effects</strong> — filter + transition</li>
+</ul>
+<div class="tip">Templates ល្អណាស់! ចុច Templates → ជ្រើស template → ដាក់ video របស់អ្នក!</div>`,
+              en: `<h3>What is CapCut?</h3>
+<p>CapCut is a <strong>free video editing app</strong> — the best for TikTok!</p>
+<h3>Download CapCut:</h3>
+<div class="step">1️⃣ App Store → search "CapCut"</div>
+<div class="step">2️⃣ Download (it's free)</div>
+<div class="step">3️⃣ Sign in with your Google Account</div>
+<h3>First look — know the screen:</h3>
+<ul>
+  <li>➕ <strong>New Project</strong> — start a new project</li>
+  <li>✂️ <strong>Timeline</strong> — video / audio track</li>
+  <li>🎵 <strong>Audio</strong> — add music</li>
+  <li>💬 <strong>Text</strong> — add captions</li>
+  <li>⚡ <strong>Effects</strong> — filters + transitions</li>
+</ul>
+<div class="tip">Use Templates! Tap Templates → pick one → add your video clips!</div>`
+            }
+          },
+          {
+            id: 'L2-1-2',
+            kh: 'CapCut — កាត់ + Text + Export', en: 'CapCut — Cut + Text + Export',
+            mins: 12,
+            content: {
+              kh: `<h3>Video ដំបូងរបស់អ្នក — ជំហានម្ដងម្ដង</h3>
+<div class="step">1️⃣ ចុច ➕ New Project → ជ្រើស video ពី Phone</div>
+<div class="step">2️⃣ ចុច video ក្នុង timeline → drag edge ដើម្បីកាត់</div>
+<div class="step">3️⃣ ចុច Audio → Add Music → ស្វែងរក song ដែលអ្នកចូលចិត្ត</div>
+<div class="step">4️⃣ ចុច Text → Add Text → វាយ caption</div>
+<div class="step">5️⃣ ជ្រើស font ស្អាត → ជ្រើស color</div>
+<div class="step">6️⃣ ចុច ↑ Export → Save to Camera Roll</div>
+<div class="tip">CapCut Auto-Captions ធ្វើ subtitle ដោយស្វ័យប្រវត្តិ! ចុច Text → Auto Captions</div>`,
+              en: `<h3>Your first video — step by step</h3>
+<div class="step">1️⃣ Tap ➕ New Project → select video from phone</div>
+<div class="step">2️⃣ Tap video in timeline → drag the edges to cut</div>
+<div class="step">3️⃣ Tap Audio → Add Music → search for a song you like</div>
+<div class="step">4️⃣ Tap Text → Add Text → type your caption</div>
+<div class="step">5️⃣ Choose a nice font → choose color</div>
+<div class="step">6️⃣ Tap ↑ Export → Save to Camera Roll</div>
+<div class="tip">CapCut Auto-Captions adds subtitles automatically! Tap Text → Auto Captions</div>`
+            }
+          }
+        ]
+      },
+      // ── Week 3: Post Your First Video! ───────
+      {
+        id: '1-3', icon: '🚀',
+        kh: 'Post Video ដំបូង!', en: 'Post Your First Video!',
+        lessons: [
+          {
+            id: 'L1-3-2',
+            kh: 'ChatGPT → គំនិត + Caption', en: 'ChatGPT → Ideas + Captions',
+            mins: 8,
+            content: {
+              kh: `<h3>ប្រើ ChatGPT ដើម្បីបង្កើតគំនិត TikTok</h3>
+<p>ចង់ post អ្វី? សួរ ChatGPT! អ្នករួចហើយប្រើ ChatGPT — ចូរ apply ទៅ content!</p>
+<h3>ព្យាយាមសួរ:</h3>
+<div class="step">💬 "ផ្ដល់ ១០ គំនិត TikTok អំពី ម្ហូបខ្មែរ"</div>
+<div class="step">💬 "សរសេរ caption ១ ជា TikTok ជាភាសាខ្មែរ សម្រាប់ video ម្ហូបសុខភាព"</div>
+<div class="step">💬 "Translate this to English: [Caption ជាខ្មែររបស់អ្នក]"</div>
+<div class="step">💬 "Give me 5 trending hashtags for Cambodian cooking TikTok"</div>
+<div class="tip">Copy caption ដែល ChatGPT ផ្ដល់ → Paste ចូល TikTok ដោយផ្ទាល់!</div>
+<h3>Hashtag ល្អសម្រាប់ TikTok ខ្មែរ:</h3>
+<ul>
+  <li>#khmerFood #cambodianCooking #ម្ហូបខ្មែរ</li>
+  <li>#CambodianTikTok #KhmerContent #fyp</li>
+</ul>`,
+              en: `<h3>Use ChatGPT to create TikTok content</h3>
+<p>Not sure what to post? Just ask ChatGPT! You already use it — now apply it to your content!</p>
+<h3>Try asking:</h3>
+<div class="step">💬 "Give me 10 TikTok ideas about Cambodian food"</div>
+<div class="step">💬 "Write a TikTok caption in Khmer for a healthy food video"</div>
+<div class="step">💬 "Translate this to English: [your Khmer caption]"</div>
+<div class="step">💬 "Give me 5 trending hashtags for Cambodian cooking TikTok"</div>
+<div class="tip">Copy the caption ChatGPT gives you → Paste directly into TikTok!</div>
+<h3>Good hashtags for Khmer TikTok:</h3>
+<ul>
+  <li>#khmerFood #cambodianCooking #ម្ហូបខ្មែរ</li>
+  <li>#CambodianTikTok #KhmerContent #fyp</li>
+</ul>`
+            }
+          },
+          {
+            id: 'L2-2-1',
+            kh: 'Canva — Design Thumbnail', en: 'Canva — Design Thumbnails',
+            mins: 10,
+            content: {
+              kh: `<h3>Canva គឺជាអ្វី?</h3>
+<p>Canva គឺជា app <strong>design ឥតគិតថ្លៃ</strong> — ងាយ design thumbnail YouTube, poster Facebook, logo!</p>
+<h3>Download + Login:</h3>
+<div class="step">1️⃣ App Store → "Canva" → Download</div>
+<div class="step">2️⃣ Continue with Google → ជ្រើស account</div>
+<h3>Design Thumbnail YouTube:</h3>
+<div class="step">1️⃣ ចុច ➕ Create → YouTube Thumbnail</div>
+<div class="step">2️⃣ ជ្រើស template ស្អាត</div>
+<div class="step">3️⃣ ចុច text → ផ្លាស់ប្ដូរ ជាអត្ថបទរបស់អ្នក</div>
+<div class="step">4️⃣ ចុច image → Upload Photo → ជ្រើសរូបរបស់អ្នក</div>
+<div class="step">5️⃣ Share → Download → Save to Photos</div>
+<div class="tip">Canva មាន templates ស្អាត ហើយ! មិនចាំបាច់ design ពីសូន្យ</div>`,
+              en: `<h3>What is Canva?</h3>
+<p>Canva is a <strong>free design app</strong> — easily design YouTube thumbnails, Facebook posters, logos!</p>
+<h3>Download + Login:</h3>
+<div class="step">1️⃣ App Store → "Canva" → Download</div>
+<div class="step">2️⃣ Continue with Google → select your account</div>
+<h3>Design a YouTube Thumbnail:</h3>
+<div class="step">1️⃣ Tap ➕ Create → YouTube Thumbnail</div>
+<div class="step">2️⃣ Choose a nice template</div>
+<div class="step">3️⃣ Tap the text → change it to your own words</div>
+<div class="step">4️⃣ Tap the image → Upload Photo → choose your photo</div>
+<div class="step">5️⃣ Share → Download → Save to Photos</div>
+<div class="tip">Canva already has beautiful templates! No need to design from scratch</div>`
+            }
+          },
+          {
+            id: 'L2-3-1',
+            kh: 'Post TikTok ដំបូងរបស់អ្នក!', en: 'Post your first TikTok!',
+            mins: 15,
+            content: {
+              kh: `<h3>ពេលវេលានៃការ POST!</h3>
+<p>អ្នករៀចរាំហើយ! នេះជាជំហាន post TikTok ដំបូង:</p>
+<div class="step">1️⃣ បើក TikTok → ចុច ➕ (នៅខាងក្រោម screen)</div>
+<div class="step">2️⃣ ចុច Upload → ជ្រើស video ដែល export ពី CapCut</div>
+<div class="step">3️⃣ ចុច Next</div>
+<div class="step">4️⃣ វាយ Caption (ប្រើ ChatGPT ជួយ!)</div>
+<div class="step">5️⃣ វាយ Hashtags: #khmerFood #cambodia #fyp</div>
+<div class="step">6️⃣ ជ្រើស Cover (thumbnail) ស្អាត</div>
+<div class="step">7️⃣ ចុច <strong>Post!</strong> 🎉</div>
+<div class="tip">#fyp និង #foryoupage ជួយ TikTok បង្ហាញ video ទៅមនុស្សច្រើន!</div>
+<h3>ពេលល្អបំផុតក្នុងការ Post:</h3>
+<ul>
+  <li>🌅 ព្រឹក: 7–9AM</li>
+  <li>🌙 យប់: 7–11PM</li>
+</ul>`,
+              en: `<h3>Time to POST!</h3>
+<p>You're ready! Here are the steps to post your first TikTok:</p>
+<div class="step">1️⃣ Open TikTok → tap ➕ (at the bottom)</div>
+<div class="step">2️⃣ Tap Upload → choose the video exported from CapCut</div>
+<div class="step">3️⃣ Tap Next</div>
+<div class="step">4️⃣ Type your Caption (use ChatGPT to help!)</div>
+<div class="step">5️⃣ Add Hashtags: #khmerFood #cambodia #fyp</div>
+<div class="step">6️⃣ Choose a nice Cover (thumbnail)</div>
+<div class="step">7️⃣ Tap <strong>Post!</strong> 🎉</div>
+<div class="tip">#fyp and #foryoupage help TikTok show your video to more people!</div>
+<h3>Best times to post:</h3>
+<ul>
+  <li>🌅 Morning: 7–9AM</li>
+  <li>🌙 Evening: 7–11PM</li>
+</ul>`
+            }
+          }
+        ]
+      }
+    ]
+  },
+
+  // ── MONTH 2 ────────────────────────────────
+  {
+    id: 2,
+    kh: 'ខែទី ២ — ខ្លាំងជាងមុន',
+    en: 'Month 2 — Level Up',
+    icon: '✨',
+    weeks: [
+      // ── Week 4: ChatGPT Go Deeper ─────────────
+      {
+        id: '2-1', icon: '💬',
+        kh: 'ChatGPT — ស៊ីជម្រៅ', en: 'ChatGPT — Go Deeper',
+        lessons: [
+          {
+            id: 'L1-3-1',
+            kh: 'ChatGPT — Voice + Prompt ល្អ', en: 'ChatGPT — Voice input + better prompts',
+            mins: 10,
+            content: {
+              kh: `<h3>ChatGPT — Tricks ដែលអ្នកប្រហែលមិនស្គាល់</h3>
+<p>អ្នករួចហើយដឹង ChatGPT មូលដ្ឋាន — ចូរ level up!</p>
+<h3>Voice Input — វាយតិចជាង:</h3>
+<div class="step">1️⃣ ចុច icon microphone 🎤 ក្នុង ChatGPT</div>
+<div class="step">2️⃣ និយាយជាភាសាខ្មែរ ឬ English</div>
+<div class="step">3️⃣ ChatGPT ស្ដាប់ + ឆ្លើយ!</div>
+<h3>Prompt ល្អ = ចម្លើយល្អ:</h3>
+<div class="step">❌ "caption" → ✅ "សរសេរ caption ១ TikTok ជាភាសាខ្មែរ អំពី recipe amok ២ នាទី ទំនើប"</div>
+<div class="step">❌ "hashtag" → ✅ "ផ្ដល់ hashtag ១០ ជាភាសាអង់គ្លេស សម្រាប់ fashion video ខ្មែរ"</div>
+<h3>Prompts ល្អ សម្រាប់ content អ្នក:</h3>
+<ul>
+  <li>💬 "សរសេរ script ១ TikTok ៣០ វិ អំពី [topic]"</li>
+  <li>💬 "ផ្ដល់ ៥ title YouTube Shorts អំពី [topic]"</li>
+  <li>💬 "ជួយខ្ញុំ reply comment នេះ: [comment]"</li>
+</ul>
+<div class="tip">ពណ៌នា detail ច្រើន → ChatGPT ឆ្លើយ​ត្រឹមត្រូវ​ជាង!</div>`,
+              en: `<h3>ChatGPT — Tricks you might not know</h3>
+<p>You already know the basics — let's level up!</p>
+<h3>Voice Input — type less:</h3>
+<div class="step">1️⃣ Tap the microphone icon 🎤 in ChatGPT</div>
+<div class="step">2️⃣ Speak in Khmer or English</div>
+<div class="step">3️⃣ ChatGPT listens + responds!</div>
+<h3>Better prompts = better answers:</h3>
+<div class="step">❌ "caption" → ✅ "Write a short TikTok caption in English about a 2-minute Amok recipe, trendy style"</div>
+<div class="step">❌ "hashtag" → ✅ "Give me 10 English hashtags for a Khmer fashion video"</div>
+<h3>Great prompts for your content:</h3>
+<ul>
+  <li>💬 "Write a 30-second TikTok script about [topic]"</li>
+  <li>💬 "Give me 5 YouTube Shorts titles about [topic]"</li>
+  <li>💬 "Help me reply to this comment: [comment]"</li>
+</ul>
+<div class="tip">More detail in your question → better answer from ChatGPT!</div>`
+            }
+          },
+          {
+            id: 'L1-1-3',
+            kh: 'AI មួយណាល្អបំផុតសម្រាប់ខ្ញុំ?', en: 'Which AI is best for me?',
+            mins: 7,
+            content: {
+              kh: `<h3>AI ដ៏ល្អបំផុត ២ ក្នុងចំណោមទាំងអស់</h3>
+<p><strong>ChatGPT</strong> (ដោយ OpenAI)</p>
+<ul>
+  <li>ល្អបំផុតសម្រាប់: ការសរសេរ ការបកប្រែ ការឆ្លើយ</li>
+  <li>ដំណើរការ: អ្នកវាយសំណួរ → ChatGPT ឆ្លើយ</li>
+  <li>ឥតគិតថ្លៃ: ✅ (version មូលដ្ឋាន)</li>
+</ul>
+<p><strong>Google Gemini</strong></p>
+<ul>
+  <li>ល្អបំផុតសម្រាប់: ស្វែងរកព័ត៌មាន + ភ្ជាប់ Google</li>
+  <li>ចូលប្រើ: gemini.google.com</li>
+  <li>ឥតគិតថ្លៃ: ✅</li>
+</ul>
+<div class="tip">ChatGPT = ល្អបំផុតសម្រាប់ content. Gemini = ល្អបំផុតសម្រាប់ ស្វែងរក.</div>
+<h3>ជំហានសាកល្បង Gemini:</h3>
+<div class="step">1️⃣ App Store → ស្វែងរក "Google Gemini"</div>
+<div class="step">2️⃣ Sign in ជាមួយ Google Account</div>
+<div class="step">3️⃣ វាយ: "ខ្ញុំចង់ post TikTok អំពី ម្ហូបខ្មែរ — ជួយខ្ញុំ"</div>`,
+              en: `<h3>The 2 best AI tools</h3>
+<p><strong>ChatGPT</strong> (by OpenAI)</p>
+<ul>
+  <li>Best for: writing, translating, answering questions</li>
+  <li>How it works: you type a question → ChatGPT answers</li>
+  <li>Free: ✅ (basic version)</li>
+</ul>
+<p><strong>Google Gemini</strong></p>
+<ul>
+  <li>Best for: searching information + connects with Google</li>
+  <li>Access: gemini.google.com</li>
+  <li>Free: ✅</li>
+</ul>
+<div class="tip">ChatGPT = best for content. Gemini = best for searching.</div>
+<h3>Try Gemini:</h3>
+<div class="step">1️⃣ App Store → search "Google Gemini"</div>
+<div class="step">2️⃣ Sign in with your Google Account</div>
+<div class="step">3️⃣ Type: "I want to post TikTok about Khmer food — help me"</div>`
+            }
+          }
+        ]
+      },
+      // ── Week 5: YouTube Shorts ────────────────
+      {
+        id: '2-2', icon: '▶️',
+        kh: 'YouTube Shorts — Platform ទី ២', en: 'YouTube Shorts — Second platform',
+        lessons: [
+          {
+            id: 'L3-1-1',
+            kh: 'Upload YouTube Shorts ដំបូង', en: 'Upload your first YouTube Short',
+            mins: 12,
+            content: {
+              kh: `<h3>ហេតុអ្វីត្រូវ YouTube?</h3>
+<p>Video TikTok ១ → Upload YouTube Shorts ផង → <strong>viewers ២ ដង!</strong></p>
+<h3>Setup YouTube Channel:</h3>
+<div class="step">1️⃣ Download YouTube app → Sign in ជាមួយ Google</div>
+<div class="step">2️⃣ ចុច icon Profile → Your Channel</div>
+<div class="step">3️⃣ ចុច "Create Channel" → ជ្រើស channel name</div>
+<div class="step">4️⃣ Upload photo channel + cover photo (ប្រើ Canva!)</div>
+<h3>Upload YouTube Short:</h3>
+<div class="step">1️⃣ ចុច ➕ → Upload video</div>
+<div class="step">2️⃣ ជ្រើស video ដែល export ពី CapCut</div>
+<div class="step">3️⃣ Title + Description (ប្រើ ChatGPT ជួយ!)</div>
+<div class="step">4️⃣ ចុច Upload!</div>
+<div class="tip">Video ខ្លីជាង 60 វិ → YouTube ដាក់ ក្នុង Shorts ដោយស្វ័យប្រវត្តិ!</div>`,
+              en: `<h3>Why YouTube?</h3>
+<p>1 TikTok video → Upload to YouTube Shorts too → <strong>double the viewers!</strong></p>
+<h3>Set up YouTube Channel:</h3>
+<div class="step">1️⃣ Download YouTube app → Sign in with Google</div>
+<div class="step">2️⃣ Tap Profile icon → Your Channel</div>
+<div class="step">3️⃣ Tap "Create Channel" → choose a channel name</div>
+<div class="step">4️⃣ Upload profile photo + cover photo (use Canva!)</div>
+<h3>Upload a YouTube Short:</h3>
+<div class="step">1️⃣ Tap ➕ → Upload video</div>
+<div class="step">2️⃣ Choose the video exported from CapCut</div>
+<div class="step">3️⃣ Add Title + Description (use ChatGPT to help!)</div>
+<div class="step">4️⃣ Tap Upload!</div>
+<div class="tip">Videos shorter than 60 seconds → YouTube automatically makes them Shorts!</div>`
+            }
+          }
+        ]
+      },
+      // ── Week 6: AI Toolkit ────────────────────
+      {
+        id: '2-3', icon: '🧠',
+        kh: 'AI ផ្សេងៗ — ល្អ​សម្រាប់​អ្វី', en: 'Different AIs — What each is good for',
+        lessons: [
+          {
+            id: 'L3-2-1',
+            kh: 'AI ៥ ដ៏ល្អ + ជ្រើសអ្នកណា?', en: '5 great AIs + which to choose',
+            mins: 10,
+            content: {
+              kh: `<h3>AI ល្អ ៥ — ប្រើអ្វី ពេលណា?</h3>
+<p><strong>🤖 ChatGPT</strong> — ល្អបំផុតសម្រាប់ <em>ការសរសេរ + ការបកប្រែ</em></p>
+<p><strong>🔵 Google Gemini</strong> — ល្អបំផុតសម្រាប់ <em>ស្វែងរក + Google ផ្សេងៗ</em></p>
+<p><strong>🎨 Adobe Firefly</strong> — ល្អបំផុតសម្រាប់ <em>ការបង្កើតរូបភាព</em></p>
+<p><strong>🎵 Suno AI</strong> — ល្អបំផុតសម្រាប់ <em>ធ្វើ​ music ពី​ AI</em></p>
+<p><strong>🎬 CapCut AI</strong> — ល្អបំផុតសម្រាប់ <em>video editing + AI effects</em></p>
+<h3>របៀបប្រើក្នុង content:</h3>
+<ul>
+  <li>🤖 ChatGPT → គំនិត + caption + hashtag</li>
+  <li>🎨 Firefly → thumbnail image ស្អាត</li>
+  <li>✂️ CapCut AI → auto caption + AI background</li>
+  <li>🎵 Suno → background music ពិសេស</li>
+</ul>
+<div class="tip">មិនចាំបាច់ប្រើ AI ទាំងអស់! ChatGPT + CapCut = ល្អគ្រប់គ្រាន់!</div>`,
+              en: `<h3>5 great AIs — when to use each</h3>
+<p><strong>🤖 ChatGPT</strong> — Best for <em>writing + translation</em></p>
+<p><strong>🔵 Google Gemini</strong> — Best for <em>searching + Google tools</em></p>
+<p><strong>🎨 Adobe Firefly</strong> — Best for <em>creating images with AI</em></p>
+<p><strong>🎵 Suno AI</strong> — Best for <em>making music with AI</em></p>
+<p><strong>🎬 CapCut AI</strong> — Best for <em>video editing + AI effects</em></p>
+<h3>How to use them in your content:</h3>
+<ul>
+  <li>🤖 ChatGPT → ideas + captions + hashtags</li>
+  <li>🎨 Firefly → beautiful thumbnail images</li>
+  <li>✂️ CapCut AI → auto captions + AI backgrounds</li>
+  <li>🎵 Suno → unique background music</li>
+</ul>
+<div class="tip">You don't need all of them! ChatGPT + CapCut = more than enough to start!</div>`
+            }
+          }
+        ]
+      }
+    ]
+  },
+
+  // ── MONTH 3 ────────────────────────────────
+  {
+    id: 3,
+    kh: 'ខែទី ៣ — កសាង Brand',
+    en: 'Month 3 — Build Your Brand',
+    icon: '🚀',
+    weeks: [
+      // ── Week 7: Content Routine ───────────────
+      {
+        id: '3-1', icon: '📅',
+        kh: 'ទម្លាប់ Content — Post ១ Video/Week', en: 'Content routine — 1 video/week',
+        lessons: [
+          {
+            id: 'L3-3-1',
+            kh: 'ផែនការ Content ប្រចាំសប្ដាហ៍', en: 'Weekly content plan',
+            mins: 10,
+            content: {
+              kh: `<h3>ទម្លាប់ ១ Video ក្នុង ១ សប្ដាហ៍</h3>
+<p>Consistency > perfection! Post ជារៀងរាល់សប្ដាហ៍ = channel ធំជាង!</p>
+<h3>ផែនការ ១ សប្ដាហ៍:</h3>
+<div class="step">📅 ថ្ងៃច័ន្ទ: គំនិត — សួរ ChatGPT ៣ គំនិត</div>
+<div class="step">📅 ថ្ងៃ​អង្គារ/​ពុធ: ថតវីដេអូ</div>
+<div class="step">📅 ថ្ងៃ​ព្រហស្ប​តិ៍: Edit ក្នុង CapCut + Thumbnail ក្នុង Canva</div>
+<div class="step">📅 ថ្ងៃ​សុក្រ/​សៅរ៍: POST! TikTok + YouTube Shorts</div>
+<h3>Topic Ideas (Khmer Content):</h3>
+<ul>
+  <li>🍲 ម្ហូប: "Recipe Amok ក្នុង ១០ នាទី"</li>
+  <li>👗 Fashion: "Khmer style ទំនើប"</li>
+  <li>😂 Comedy: "ពេលខ្មែរ​ ..."</li>
+  <li>👨‍👩‍👧 Family: "ម្ដាយ + ខ្ញុំ ធ្វើ..."</li>
+</ul>
+<div class="tip">Video ដំបូង ប្រហែល 5-10 views = ធម្មតា! បន្ដ post — views នឹងកើន!</div>`,
+              en: `<h3>Routine: 1 Video Per Week</h3>
+<p>Consistency beats perfection! Posting every week = channel grows faster!</p>
+<h3>Weekly schedule:</h3>
+<div class="step">📅 Monday: Ideas — ask ChatGPT for 3 ideas</div>
+<div class="step">📅 Tuesday/Wednesday: Film the video</div>
+<div class="step">📅 Thursday: Edit in CapCut + Thumbnail in Canva</div>
+<div class="step">📅 Friday/Saturday: POST! TikTok + YouTube Shorts</div>
+<h3>Topic Ideas (Khmer Content):</h3>
+<ul>
+  <li>🍲 Food: "Amok Recipe in 10 minutes"</li>
+  <li>👗 Fashion: "Modern Khmer style outfit"</li>
+  <li>😂 Comedy: "When Cambodians..."</li>
+  <li>👨‍👩‍👧 Family: "Mom + me cooking..."</li>
+</ul>
+<div class="tip">Your first videos might get 5-10 views — that's normal! Keep posting and views will grow!</div>`
+            }
+          }
+        ]
+      },
+      // ── Week 8: Batch Filming ─────────────────
+      {
+        id: '3-2', icon: '🎥',
+        kh: 'ថត ៣ Video ក្នុង ១ ថ្ងៃ', en: 'Film 3 videos in 1 day',
+        lessons: [
+          {
+            id: 'L3-2-2',
+            kh: 'Batch Filming — ចំណេញពេល', en: 'Batch filming — save time',
+            mins: 8,
+            content: {
+              kh: `<h3>Batch Filming គឺជាអ្វី?</h3>
+<p>ថត videos <strong>ច្រើន</strong> ក្នុងថ្ងៃតែ​មួយ — ចំណេញ​ពេល + content ច្រើន!</p>
+<h3>Plan ថ្ងៃថត:</h3>
+<div class="step">1️⃣ ព្រឹក: ChatGPT → ស្នើ ៣ topic ផ្សេងៗ</div>
+<div class="step">2️⃣ ស្លៀកពាក់ ដូចគ្នា → ១ look = ៣ video</div>
+<div class="step">3️⃣ ថត video ១ → ២ → ៣ ជាប់គ្នា</div>
+<div class="step">4️⃣ Save ទាំងអស់ → Edit ក្នុង CapCut</div>
+<div class="step">5️⃣ Post ១/ថ្ងៃ ក្នុង ៣ ថ្ងៃ</div>
+<h3>Ideas batch filming:</h3>
+<ul>
+  <li>🍲 ១ ថ្ងៃ = ៣ recipe videos</li>
+  <li>👗 ១ ថ្ងៃ = ៣ outfit videos (ផ្លាស់ shirt ២ ដង)</li>
+  <li>😂 ១ ថ្ងៃ = ៣ comedy skits</li>
+</ul>
+<div class="tip">Creator ល្អៗ ថត ១០+ videos ក្នុង​ ១ ថ្ងៃ — ហើយ post ៣ ដង/​សប្ដាហ៍!</div>`,
+              en: `<h3>What is Batch Filming?</h3>
+<p>Film <strong>multiple videos</strong> in one day — saves time + more content!</p>
+<h3>Plan your filming day:</h3>
+<div class="step">1️⃣ Morning: ChatGPT → get 3 different topic ideas</div>
+<div class="step">2️⃣ Wear the same outfit → 1 look = 3 videos</div>
+<div class="step">3️⃣ Film video 1 → 2 → 3 back to back</div>
+<div class="step">4️⃣ Save all → edit in CapCut</div>
+<div class="step">5️⃣ Post 1 per day over 3 days</div>
+<h3>Batch filming ideas:</h3>
+<ul>
+  <li>🍲 1 day = 3 recipe videos</li>
+  <li>👗 1 day = 3 outfit videos (change shirt twice)</li>
+  <li>😂 1 day = 3 comedy skits</li>
+</ul>
+<div class="tip">Top creators film 10+ videos in one day — then post 3x per week!</div>`
+            }
+          }
+        ]
+      },
+      // ── Week 9: Grow ──────────────────────────
+      {
+        id: '3-3', icon: '🌟',
+        kh: 'ធំ + ចំណេញ', en: 'Grow + Earn',
+        lessons: [
+          {
+            id: 'L3-3-2',
+            kh: 'TikTok LIVE + ធ្វើ​ប្រាក់', en: 'TikTok LIVE + how creators earn',
+            mins: 12,
+            content: {
+              kh: `<h3>ធ្វើ​ប្រាក់ ជាមួយ TikTok</h3>
+<p>Creators ខ្មែរ ប្រើ TikTok ធ្វើ​ប្រាក់ ៣ វិធី:</p>
+<ul>
+  <li>🎁 <strong>TikTok LIVE Gifts</strong> — viewer ផ្ញើ gift = ប្រាក់</li>
+  <li>📦 <strong>Brand Deals</strong> — ក្រុមហ៊ុន pay អ្នក review product</li>
+  <li>🛒 <strong>TikTok Shop</strong> — លក់ product ផ្ទាល់ក្នុង TikTok</li>
+</ul>
+<h3>TikTok LIVE — ចាប់ផ្តើម:</h3>
+<div class="step">1️⃣ ត្រូវការ 1,000+ followers ដំបូង</div>
+<div class="step">2️⃣ TikTok → ➕ → LIVE</div>
+<div class="step">3️⃣ ជ្រើស topic: ចម្អិនអាហារ LIVE, ស្លៀកពាក់ LIVE, etc.</div>
+<div class="step">4️⃣ សួរ viewers — interact ជានិច្ច!</div>
+<h3>Tips ធ្វើ LIVE ល្អ:</h3>
+<ul>
+  <li>⏰ LIVE យ៉ាងតិច ៣០ នាទី</li>
+  <li>👋 ស្វាគមន៍ viewer ថ្មី ជានិច្ច</li>
+  <li>🎯 LIVE ពេល peak hours: 7–10PM</li>
+</ul>
+<div class="tip">Consistency = key! Post ១ video/ថ្ងៃ + LIVE ១ ដង/សប្ដាហ៍ = grow លឿន!</div>`,
+              en: `<h3>Earning money with TikTok</h3>
+<p>Khmer creators earn on TikTok in 3 ways:</p>
+<ul>
+  <li>🎁 <strong>TikTok LIVE Gifts</strong> — viewers send gifts = real money</li>
+  <li>📦 <strong>Brand Deals</strong> — companies pay you to review products</li>
+  <li>🛒 <strong>TikTok Shop</strong> — sell products directly in TikTok</li>
+</ul>
+<h3>TikTok LIVE — how to start:</h3>
+<div class="step">1️⃣ You need 1,000+ followers first</div>
+<div class="step">2️⃣ TikTok → ➕ → LIVE</div>
+<div class="step">3️⃣ Pick a topic: cooking live, outfit try-on live, etc.</div>
+<div class="step">4️⃣ Talk to viewers — always interact!</div>
+<h3>Tips for a great LIVE:</h3>
+<ul>
+  <li>⏰ Go LIVE for at least 30 minutes</li>
+  <li>👋 Welcome new viewers by name</li>
+  <li>🎯 Go LIVE during peak hours: 7–10PM</li>
+</ul>
+<div class="tip">Consistency = key! Post 1 video/day + LIVE 1x/week = fast growth!</div>`
+            }
+          }
+        ]
+      }
+    ]
+  }
+];
+
+// ══════════════════════════════════════════════
+// TOOLS DATA
+// ══════════════════════════════════════════════
+const tools = [
+  { icon: '🤖', nameKh: 'ChatGPT', nameEn: 'ChatGPT', descKh: 'AI ការសរសេរ + គំនិត', descEn: 'Write, translate, ideas', url: 'https://apps.apple.com/app/chatgpt/id6448311069' },
+  { icon: '✂️', nameKh: 'CapCut', nameEn: 'CapCut', descKh: 'កែ video ងាយ', descEn: 'Easy video editing', url: 'https://apps.apple.com/app/capcut/id1500855883' },
+  { icon: '🎨', nameKh: 'Canva', nameEn: 'Canva', descKh: 'Design poster + thumbnail', descEn: 'Design posters + thumbnails', url: 'https://apps.apple.com/app/canva/id897446215' },
+  { icon: '🎵', nameKh: 'TikTok', nameEn: 'TikTok', descKh: 'Post + Creator mode', descEn: 'Post + Creator mode', url: 'https://apps.apple.com/app/tiktok/id835599320' },
+  { icon: '▶️', nameKh: 'YouTube', nameEn: 'YouTube', descKh: 'Channel + Shorts', descEn: 'Channel + Shorts', url: 'https://apps.apple.com/app/youtube/id544007664' },
+  { icon: '🔵', nameKh: 'Gemini', nameEn: 'Gemini', descKh: 'AI Google', descEn: 'Google AI', url: 'https://apps.apple.com/app/google-gemini/id6477489729' },
+  { icon: '📸', nameKh: 'Google Photos', nameEn: 'Google Photos', descKh: 'Save រូបភាព FREE', descEn: 'Free photo backup', url: 'https://apps.apple.com/app/google-photos/id962194608' },
+  { icon: '📧', nameKh: 'Gmail', nameEn: 'Gmail', descKh: 'Email Google', descEn: 'Google Email', url: 'https://apps.apple.com/app/gmail/id422689480' },
+];
+
+// ══════════════════════════════════════════════
+// PROGRESS
+// ══════════════════════════════════════════════
+function getProgress() { return JSON.parse(localStorage.getItem('progress') || '{}'); }
+function saveProgress(p) { localStorage.setItem('progress', JSON.stringify(p)); }
+function isDone(id) { return !!getProgress()[id]; }
+function markDone(id) { const p = getProgress(); p[id] = 1; saveProgress(p); }
+
+function totalLessons() {
+  return curriculum.reduce((a, m) => a + m.weeks.reduce((b, w) => b + w.lessons.length, 0), 0);
+}
+function doneLessons() {
+  const p = getProgress();
+  return curriculum.reduce((a, m) => a + m.weeks.reduce((b, w) =>
+    b + w.lessons.filter(l => p[l.id]).length, 0), 0);
+}
+function weekDone(week) {
+  return week.lessons.filter(l => isDone(l.id)).length;
+}
+
+// ══════════════════════════════════════════════
+// SCREENS
+// ══════════════════════════════════════════════
+let currentScreen = 'home';
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  const navBtn = document.getElementById('nav-' + name);
+  if (navBtn) navBtn.classList.add('active');
+  currentScreen = name;
+  if (name === 'home') renderHome();
+  if (name === 'tools') renderTools();
+}
+
+// ══════════════════════════════════════════════
+// HOME RENDER
+// ══════════════════════════════════════════════
+let activeMth = 0;
+
+function renderHome() {
+  const done = doneLessons(), total = totalLessons();
+  const pct = total ? Math.round(done / total * 100) : 0;
+  const circ = 289;
+  document.getElementById('ringPct').textContent = pct + '%';
+  document.getElementById('ringFill').style.strokeDashoffset = circ - (circ * pct / 100);
+
+  const weeksTotal = curriculum.reduce((a,m) => a + m.weeks.length, 0);
+  const weeksDone  = curriculum.reduce((a,m) => a + m.weeks.filter(w => weekDone(w) === w.lessons.length).length, 0);
+  document.getElementById('home-sub').textContent = lang === 'kh'
+    ? `${done} / ${total} មេរៀន · ${weeksDone} / ${weeksTotal} ជំហាន`
+    : `${done} / ${total} lessons · ${weeksDone} / ${weeksTotal} weeks`;
+
+  // Month tabs
+  const tabs = document.getElementById('monthTabs');
+  tabs.innerHTML = '';
+  curriculum.forEach((m, i) => {
+    const b = document.createElement('button');
+    b.className = 'month-tab' + (i === activeMth ? ' active' : '');
+    b.textContent = `${m.icon} ${lang === 'kh' ? m.kh : m.en}`;
+    b.onclick = () => { activeMth = i; renderHome(); };
+    tabs.appendChild(b);
+  });
+
+  // Week list
+  const list = document.getElementById('weekList');
+  list.innerHTML = '';
+  curriculum[activeMth].weeks.forEach(week => {
+    const done = weekDone(week), total = week.lessons.length;
+    const div = document.createElement('div');
+    div.className = 'week-card';
+    div.innerHTML = `
+      <div class="week-header" onclick="toggleWeek(this.parentElement)">
+        <span class="week-icon">${week.icon}</span>
+        <div class="week-info">
+          <div class="week-title">${lang === 'kh' ? week.kh : week.en}</div>
+          <div class="week-progress">${done}/${total} ${lang === 'kh' ? 'មេរៀន' : 'lessons'} ${done === total && total > 0 ? '✅' : ''}</div>
+        </div>
+        <span class="week-arrow">›</span>
+      </div>
+      <div class="week-lessons">${week.lessons.map(l => `
+        <div class="lesson-row" onclick="openLesson('${l.id}')">
+          <div class="lesson-check ${isDone(l.id) ? 'done' : ''}">${isDone(l.id) ? '✓' : ''}</div>
+          <div class="lesson-info">
+            <div class="lesson-title">${lang === 'kh' ? l.kh : l.en}</div>
+            <div class="lesson-meta">⏱ ${l.mins} ${lang === 'kh' ? 'នាទី' : 'min'}</div>
+          </div>
+          <span class="lesson-arrow">›</span>
+        </div>`).join('')}
+      </div>`;
+    list.appendChild(div);
+  });
+}
+
+function toggleWeek(card) {
+  card.classList.toggle('open');
+}
+
+// ══════════════════════════════════════════════
+// LESSON
+// ══════════════════════════════════════════════
+let currentLessonId = null;
+
+function openLesson(id) {
+  const lesson = findLesson(id);
+  if (!lesson) return;
+  currentLessonId = id;
+
+  document.getElementById('backBtn').textContent = t('back');
+  document.getElementById('lessonTitle').textContent = lang === 'kh' ? lesson.kh : lesson.en;
+  document.getElementById('lessonDuration').innerHTML = `⏱ ${lesson.mins} ${lang === 'kh' ? 'នាទី' : 'min'}`;
+  document.getElementById('lessonContent').innerHTML = lesson.content[lang] || lesson.content.en;
+
+  const btn = document.getElementById('completeBtn');
+  if (isDone(id)) {
+    btn.textContent = t('alreadyDone');
+    btn.className = 'complete-btn done';
+  } else {
+    btn.textContent = t('complete');
+    btn.className = 'complete-btn';
+  }
+
+  showScreen('lesson');
+  document.getElementById('screen-lesson').scrollTop = 0;
+}
+
+function findLesson(id) {
+  for (const m of curriculum) for (const w of m.weeks)
+    for (const l of w.lessons) if (l.id === id) return l;
+  return null;
+}
+
+function completeLesson() {
+  if (!currentLessonId) return;
+  markDone(currentLessonId);
+
+  const btn = document.getElementById('completeBtn');
+  btn.textContent = t('alreadyDone');
+  btn.className = 'complete-btn done';
+
+  // Celebration
+  const done = doneLessons(), total = totalLessons();
+  const pct = Math.round(done / total * 100);
+  let emoji = '🎉', title, sub;
+  if (lang === 'kh') {
+    title = 'ល្អណាស់! 🌟';
+    sub = `អ្នកបានរៀន ${done} / ${total} មេរៀន (${pct}%)`;
+  } else {
+    title = 'Well done! 🌟';
+    sub = `You completed ${done} / ${total} lessons (${pct}%)`;
+  }
+  if (pct >= 100) { emoji = '🏆'; title = lang === 'kh' ? 'ជោគជ័យ! 🏆' : 'You did it! 🏆'; }
+  else if (pct >= 50) emoji = '🔥';
+
+  document.getElementById('celebEmoji').textContent = emoji;
+  document.getElementById('celebTitle').textContent = title;
+  document.getElementById('celebSub').textContent = sub;
+  document.getElementById('celebOk').textContent = t('celebOk');
+  document.getElementById('celebrate').classList.add('show');
+}
+
+function closeCelebrate() {
+  document.getElementById('celebrate').classList.remove('show');
+}
+
+// ══════════════════════════════════════════════
+// TOOLS
+// ══════════════════════════════════════════════
+function renderTools() {
+  const grid = document.getElementById('toolsGrid');
+  grid.innerHTML = tools.map(t => `
+    <a class="tool-card" href="${t.url}" target="_blank">
+      <div class="tool-icon">${t.icon}</div>
+      <div class="tool-name">${lang === 'kh' ? t.nameKh : t.nameEn}</div>
+      <div class="tool-desc">${lang === 'kh' ? t.descKh : t.descEn}</div>
+    </a>`).join('');
+}
+
+// ══════════════════════════════════════════════
+// NOTIFICATIONS
+// ══════════════════════════════════════════════
+const notifKey = 'notifOn';
+
+function updateNotifToggle() {
+  const on = localStorage.getItem(notifKey) === '1';
+  const btn = document.getElementById('notifToggle');
+  btn.className = 'toggle' + (on ? ' on' : '');
+}
+
+async function toggleNotif() {
+  const on = localStorage.getItem(notifKey) === '1';
+  if (!on) {
+    if ('Notification' in window) {
+      const perm = await Notification.requestPermission();
+      if (perm === 'granted') {
+        localStorage.setItem(notifKey, '1');
+        scheduleReminder();
+      }
+    }
+  } else {
+    localStorage.setItem(notifKey, '0');
+  }
+  updateNotifToggle();
+}
+
+function scheduleReminder() {
+  if (!('serviceWorker' in navigator)) return;
+  navigator.serviceWorker.ready.then(reg => {
+    setTimeout(() => {
+      reg.showNotification('រៀន AI 🤖', {
+        body: lang === 'kh' ? 'ពេលវេលារៀន AI! ចំណាយ ១០ នាទី 💪' : 'Time to learn AI! Just 10 minutes 💪',
+        icon: '/guide/icon.png',
+        badge: '/guide/icon.png',
+        tag: 'daily-reminder',
+        renotify: true
+      });
+    }, 5000);
+  });
+}
+
+// ══════════════════════════════════════════════
+// RESET
+// ══════════════════════════════════════════════
+function resetProgress() {
+  if (confirm(t('resetConfirm'))) {
+    localStorage.removeItem('progress');
+    renderHome();
+  }
+}
+
+// ══════════════════════════════════════════════
+// SERVICE WORKER
+// ══════════════════════════════════════════════
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/guide/sw.js').catch(() => {});
+}
+
+// ══════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════
+applyLang();
+renderHome();
+renderTools();
+updateNotifToggle();
+</script>
+</body>
+</html>

@@ -1,0 +1,347 @@
+{
+  "100": [
+    {
+      "id": 1,
+      "title": "Introduction to OHS in Canada",
+      "subtitle": "History, scope & why it matters"
+    },
+    {
+      "id": 2,
+      "title": "Internal Responsibility System",
+      "subtitle": "Foundation of Canadian OHS"
+    },
+    {
+      "id": 3,
+      "title": "Worker Rights & Duties",
+      "subtitle": "Right to know, participate & refuse"
+    },
+    {
+      "id": 4,
+      "title": "Employer & Supervisor Duties",
+      "subtitle": "Due diligence & duty of care"
+    },
+    {
+      "id": 5,
+      "title": "Joint Health & Safety Committees",
+      "subtitle": "Structure, powers & effectiveness"
+    },
+    {
+      "id": 6,
+      "title": "Canadian OHS Legislation Overview",
+      "subtitle": "Federal, provincial & territorial"
+    }
+  ],
+  "105": [
+    {
+      "id": 1,
+      "title": "Organizational Theory & Structure",
+      "subtitle": "How organizations work & why it matters for OHS"
+    },
+    {
+      "id": 2,
+      "title": "Workplace Culture & Climate",
+      "subtitle": "Safety culture, values & norms"
+    },
+    {
+      "id": 3,
+      "title": "Team Dynamics & Group Behaviour",
+      "subtitle": "Group decision-making, conformity & conflict"
+    },
+    {
+      "id": 4,
+      "title": "Motivation & Human Behaviour",
+      "subtitle": "Theories of motivation & behaviour change"
+    },
+    {
+      "id": 5,
+      "title": "Change Management",
+      "subtitle": "Managing organizational change & resistance"
+    },
+    {
+      "id": 6,
+      "title": "OHS Integration in Organizations",
+      "subtitle": "Building OHS into organizational systems"
+    }
+  ],
+  "110": [
+    {
+      "id": 1,
+      "title": "Safety Leadership Principles",
+      "subtitle": "Traits, styles & transformational leadership"
+    },
+    {
+      "id": 2,
+      "title": "Communication in OHS",
+      "subtitle": "Effective messaging, barriers & strategies"
+    },
+    {
+      "id": 3,
+      "title": "Worker Engagement & Participation",
+      "subtitle": "Consultation, involvement & empowerment"
+    },
+    {
+      "id": 4,
+      "title": "Behavior-Based Safety",
+      "subtitle": "Observation, feedback & behaviour change"
+    },
+    {
+      "id": 5,
+      "title": "Conflict & Difficult Conversations",
+      "subtitle": "Navigating disagreements & safety non-compliance"
+    },
+    {
+      "id": 6,
+      "title": "Leading Change in Safety Culture",
+      "subtitle": "Change management & continuous improvement"
+    }
+  ],
+  "115": [
+    {
+      "id": 1,
+      "title": "Incident Investigation Principles",
+      "subtitle": "Purpose, scope & legal requirements"
+    },
+    {
+      "id": 2,
+      "title": "Root Cause Analysis Methods",
+      "subtitle": "5 Whys, fishbone, fault tree & ICAM"
+    },
+    {
+      "id": 3,
+      "title": "Investigation Process & Procedures",
+      "subtitle": "Scene preservation, interviews & evidence"
+    },
+    {
+      "id": 4,
+      "title": "Reporting & Documentation",
+      "subtitle": "What, when & how to report"
+    },
+    {
+      "id": 5,
+      "title": "Corrective & Preventive Actions",
+      "subtitle": "From findings to lasting fixes"
+    },
+    {
+      "id": 6,
+      "title": "Near Misses & Hazard Reporting",
+      "subtitle": "Building a reporting culture"
+    }
+  ],
+  "120": [
+    {
+      "id": 1,
+      "title": "OHS Foundations & Hazard Types",
+      "subtitle": "Physical, chemical, biological, ergonomic & psychosocial"
+    },
+    {
+      "id": 2,
+      "title": "Workplace Inspections",
+      "subtitle": "Planning, conducting & reporting inspections"
+    },
+    {
+      "id": 3,
+      "title": "Safety Culture & Program Development",
+      "subtitle": "Building & sustaining safety programs"
+    },
+    {
+      "id": 4,
+      "title": "Training Program Design",
+      "subtitle": "Needs assessment, adult learning & evaluation"
+    },
+    {
+      "id": 5,
+      "title": "Delivering Safety Training",
+      "subtitle": "Facilitation methods & engagement techniques"
+    },
+    {
+      "id": 6,
+      "title": "Evaluating Training Effectiveness",
+      "subtitle": "Kirkpatrick model & continuous improvement"
+    }
+  ],
+  "125": [
+    {
+      "id": 1,
+      "title": "SMS Frameworks & Standards",
+      "subtitle": "OHSAS 18001, ISO 45001 & Canadian standards"
+    },
+    {
+      "id": 2,
+      "title": "PDCA Cycle in Safety Management",
+      "subtitle": "Plan, Do, Check, Act for continuous improvement"
+    },
+    {
+      "id": 3,
+      "title": "Hazard & Risk Management",
+      "subtitle": "Systematic identification, assessment & control"
+    },
+    {
+      "id": 4,
+      "title": "Safety Program Elements",
+      "subtitle": "Policies, procedures, roles & responsibilities"
+    },
+    {
+      "id": 5,
+      "title": "Auditing & Performance Measurement",
+      "subtitle": "Internal audits, KPIs & lagging/leading indicators"
+    },
+    {
+      "id": 6,
+      "title": "Continuous Improvement",
+      "subtitle": "CAPA systems, lessons learned & benchmarking"
+    }
+  ],
+  "130": [
+    {
+      "id": 1,
+      "title": "WHMIS 2015 & GHS",
+      "subtitle": "Classification, labels & Hazardous Products Act"
+    },
+    {
+      "id": 2,
+      "title": "Safety Data Sheets (SDS)",
+      "subtitle": "Reading & interpreting the 16 sections"
+    },
+    {
+      "id": 3,
+      "title": "Hazard Identification Methods",
+      "subtitle": "JHA, HAZOP, what-if & checklists"
+    },
+    {
+      "id": 4,
+      "title": "Risk Assessment & Risk Matrices",
+      "subtitle": "Likelihood, severity & risk ranking"
+    },
+    {
+      "id": 5,
+      "title": "Hierarchy of Controls",
+      "subtitle": "Elimination through to PPE"
+    },
+    {
+      "id": 6,
+      "title": "Transportation of Dangerous Goods",
+      "subtitle": "TDG Act, classes, placards & docs"
+    },
+    {
+      "id": 7,
+      "title": "Spill Response & Emergency Procedures",
+      "subtitle": "Containment, cleanup & reporting"
+    }
+  ],
+  "135": [
+    {
+      "id": 1,
+      "title": "Canadian OHS Legal Framework",
+      "subtitle": "Federal, provincial & territorial jurisdiction"
+    },
+    {
+      "id": 2,
+      "title": "OHS Legislation & Regulations",
+      "subtitle": "Key acts, regulations & standards"
+    },
+    {
+      "id": 3,
+      "title": "Enforcement & Compliance",
+      "subtitle": "Inspections, orders, penalties & Bill C-45"
+    },
+    {
+      "id": 4,
+      "title": "Ethics in OHS Practice",
+      "subtitle": "Ethical frameworks & professional obligations"
+    },
+    {
+      "id": 5,
+      "title": "Professional Liability & Due Diligence",
+      "subtitle": "Demonstrating due diligence & avoiding liability"
+    },
+    {
+      "id": 6,
+      "title": "Worker Rights & Compensation",
+      "subtitle": "WCB/WSIB, return to work & appeals"
+    }
+  ],
+  "140": [
+    {
+      "id": 1,
+      "title": "Introduction to Occupational Hygiene",
+      "subtitle": "Anticipation, recognition, evaluation, control"
+    },
+    {
+      "id": 2,
+      "title": "Chemical Hazards",
+      "subtitle": "Gases, vapours, dusts, fumes & mists"
+    },
+    {
+      "id": 3,
+      "title": "Physical Hazards \u2014 Noise & Vibration",
+      "subtitle": "Measurement, limits & hearing conservation"
+    },
+    {
+      "id": 4,
+      "title": "Physical Hazards \u2014 Radiation & Thermal",
+      "subtitle": "Ionizing, non-ionizing, heat & cold stress"
+    },
+    {
+      "id": 5,
+      "title": "Biological Hazards",
+      "subtitle": "Bloodborne pathogens, mould, infectious agents"
+    },
+    {
+      "id": 6,
+      "title": "Exposure Assessment & Monitoring",
+      "subtitle": "TLVs, OELs, sampling & instruments"
+    },
+    {
+      "id": 7,
+      "title": "Engineering & Administrative Controls",
+      "subtitle": "Ventilation, substitution, work practices"
+    },
+    {
+      "id": 8,
+      "title": "PPE & Hygiene Programs",
+      "subtitle": "Respiratory protection, program management"
+    }
+  ],
+  "145": [
+    {
+      "id": 1,
+      "title": "Fire Behavior",
+      "subtitle": "How fires start, spread & kill"
+    },
+    {
+      "id": 2,
+      "title": "Fire Prevention & Hazard ID",
+      "subtitle": "Stop fires before they start"
+    },
+    {
+      "id": 3,
+      "title": "Fire Protection Systems",
+      "subtitle": "Sprinklers, alarms & extinguishers"
+    },
+    {
+      "id": 4,
+      "title": "Emergency Response Procedures",
+      "subtitle": "When the alarm goes off"
+    },
+    {
+      "id": 5,
+      "title": "Human Behavior in Fire",
+      "subtitle": "Why people die \u2014 and how to prevent it"
+    },
+    {
+      "id": 6,
+      "title": "OHS Legal Responsibilities",
+      "subtitle": "Canadian law & your duty of care"
+    },
+    {
+      "id": 7,
+      "title": "Fire Risk Assessment",
+      "subtitle": "Identify, evaluate, control"
+    },
+    {
+      "id": 8,
+      "title": "Digital EHS Tools",
+      "subtitle": "Technology for modern safety officers"
+    }
+  ]
+}

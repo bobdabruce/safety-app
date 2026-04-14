@@ -8,6 +8,7 @@
     <meta name="theme-color" content="#1a1a2e">
     <title>SafetyNomad AI</title>
     <link rel="manifest" href="/static/manifest.json">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -268,6 +269,356 @@
             border-radius: 20px;
         }
 
+        /* Calculator */
+        .calculator {
+            display: none;
+            position: fixed;
+            bottom: 150px;
+            right: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 16px;
+            padding: 15px;
+            z-index: 100;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        .calculator.show { display: block; }
+        .calc-display {
+            background: rgba(0,0,0,0.3);
+            border: none;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            width: 100%;
+            text-align: right;
+            margin-bottom: 10px;
+        }
+        .calc-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        .calc-btn {
+            padding: 15px;
+            font-size: 1.2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            background: rgba(255,255,255,0.1);
+            color: var(--text-primary);
+            transition: all 0.2s;
+        }
+        .calc-btn:hover { background: rgba(255,255,255,0.2); }
+        .calc-btn.operator { background: var(--accent); }
+        .calc-btn.equals { background: var(--success); }
+        .calc-btn.clear { background: #ff6b6b; }
+
+        /* Notepad */
+        .notepad {
+            display: none;
+            position: fixed;
+            bottom: 150px;
+            left: 20px;
+            background: var(--bg-secondary);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 16px;
+            padding: 15px;
+            z-index: 9999;
+            box-shadow: 0 12px 48px rgba(0,0,0,0.7);
+            width: 310px;
+        }
+        .notepad.show { display: block; }
+        .notepad-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            cursor: grab;
+            user-select: none;
+        }
+        .notepad-header:active { cursor: grabbing; }
+        .notepad-header h3 { margin: 0; font-size: 1rem; }
+        .notepad-drag-hint { font-size: 0.7rem; color: var(--text-secondary); opacity: 0.6; }
+        .notepad-textarea {
+            width: 100%;
+            height: 200px;
+            background: rgba(0,0,0,0.3);
+            border: none;
+            border-radius: 8px;
+            padding: 10px;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            resize: vertical;
+            min-height: 80px;
+        }
+        .notepad-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+            align-items: center;
+        }
+        .notepad-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .notepad-btn.save { background: var(--success); color: white; }
+        .notepad-btn.clear { background: #ff6b6b; color: white; }
+        .notepad-autosave { font-size: 0.7rem; color: var(--text-secondary); opacity: 0.55; white-space: nowrap; }
+
+        /* Floating Notes Button — always on top of everything */
+        .notes-fab {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 10001;
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: #f59e0b;
+            border: none;
+            cursor: pointer;
+            font-size: 1.4rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .notes-fab:hover { transform: scale(1.1); box-shadow: 0 6px 28px rgba(0,0,0,0.6); }
+        .notes-fab:active { transform: scale(0.95); }
+        .notes-fab-hint {
+            position: fixed;
+            bottom: 82px;
+            right: 18px;
+            z-index: 10001;
+            font-size: 0.65rem;
+            color: rgba(255,255,255,0.45);
+            text-align: center;
+            pointer-events: none;
+            letter-spacing: 0.02em;
+        }
+
+        /* OHS Tools Panel */
+        .ohs-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: var(--bg-primary);
+            z-index: 200;
+            flex-direction: column;
+            animation: slideUp 0.3s ease;
+        }
+        .ohs-overlay.show { display: flex; }
+
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .ohs-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.4);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+        }
+        .ohs-header h2 { font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+        .ohs-close {
+            background: none; border: none; color: var(--text-secondary);
+            font-size: 1.5rem; cursor: pointer; padding: 4px 8px; border-radius: 8px;
+        }
+        .ohs-close:hover { background: rgba(255,255,255,0.1); color: white; }
+
+        .ohs-tabs {
+            display: flex;
+            gap: 0;
+            background: rgba(0,0,0,0.3);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+            overflow-x: auto;
+        }
+        .ohs-tab {
+            padding: 12px 18px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.85rem;
+            border-bottom: 2px solid transparent;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .ohs-tab:hover { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+        .ohs-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+        .ohs-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+
+        .ohs-calc { display: none; }
+        .ohs-calc.active { display: block; }
+
+        /* Push/Pull/Carry iframe tab */
+        #ohs-ppcc.active { display: flex; flex-direction: column; }
+        .ppcc-iframe-wrap {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            height: calc(100vh - 185px);
+        }
+        .ppcc-iframe-wrap iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .ohs-calc h3 {
+            font-size: 1rem;
+            margin-bottom: 4px;
+            color: var(--text-primary);
+        }
+        .ohs-calc .calc-desc {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .ohs-fields {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        @media (max-width: 480px) { .ohs-fields { grid-template-columns: 1fr; } }
+
+        .ohs-field label {
+            display: block;
+            font-size: 0.78rem;
+            color: var(--text-secondary);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .ohs-field input[type=number] {
+            width: 100%;
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            padding: 11px 14px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .ohs-field input[type=number]:focus { border-color: var(--accent); }
+
+        .ohs-calc-btn {
+            width: 100%;
+            padding: 14px;
+            background: var(--accent);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: opacity 0.2s;
+            margin-bottom: 20px;
+        }
+        .ohs-calc-btn:hover { opacity: 0.9; }
+
+        .ohs-result {
+            display: none;
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-top: 4px;
+        }
+        .ohs-result.show { display: block; }
+        .ohs-result .result-value {
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+        .ohs-result .result-label {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-bottom: 12px;
+        }
+        .ohs-result .risk-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .ohs-result .result-actions {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            opacity: 0.9;
+        }
+
+        .risk-low    { background: rgba(74,222,128,0.15); border: 1px solid rgba(74,222,128,0.3); color: #4ade80; }
+        .risk-mod    { background: rgba(251,191,36,0.15);  border: 1px solid rgba(251,191,36,0.3);  color: #fbbf24; }
+        .risk-high   { background: rgba(251,146,60,0.15);  border: 1px solid rgba(251,146,60,0.3);  color: #fb923c; }
+        .risk-crit   { background: rgba(239,68,68,0.15);   border: 1px solid rgba(239,68,68,0.3);   color: #ef4444; }
+
+        .ohs-divider {
+            border: none;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            margin: 24px 0;
+        }
+
+        .ohs-ref {
+            font-size: 0.72rem;
+            color: var(--text-secondary);
+            opacity: 0.6;
+            margin-top: 16px;
+        }
+
+        /* WBGT Indoor/Outdoor toggle */
+        .wbgt-toggle-wrap {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .wbgt-toggle-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.05);
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .wbgt-toggle-btn.active {
+            background: rgba(233,69,96,0.2);
+            border-color: var(--accent);
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .wbgt-formula {
+            font-size: 0.82rem;
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            border-left: 3px solid var(--accent);
+        }
+
         @keyframes pulse {
             0%, 100% { box-shadow: 0 0 0 0 rgba(233, 69, 96, 0.4); }
             50% { box-shadow: 0 0 0 15px rgba(233, 69, 96, 0); }
@@ -316,12 +667,386 @@
             .message { max-width: 90%; }
             .quick-btn { font-size: 0.75rem; padding: 5px 10px; }
         }
+
+        /* ── OHS Study Panel ─────────────────────────────────────────────── */
+        .study-overlay {
+            position: fixed; inset: 0; z-index: 2000;
+            background: var(--bg-primary);
+            display: flex; flex-direction: column;
+            transform: translateX(100%);
+            transition: transform .25s ease;
+            overflow: hidden;
+        }
+        .study-overlay.show { transform: translateX(0); }
+        .study-header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 14px 18px;
+            background: rgba(0,0,0,0.35);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            flex-shrink: 0;
+        }
+        .study-back {
+            background: none; border: 1px solid rgba(255,255,255,0.2);
+            color: var(--text-secondary); border-radius: 8px;
+            padding: 6px 14px; cursor: pointer; font-size: 0.85rem;
+            transition: .15s;
+        }
+        .study-back:hover { color: #fff; border-color: var(--accent); }
+        .study-title { font-size: 1rem; font-weight: 700; color: #fff; flex: 1; }
+        .study-actions-bar { display: flex; gap: 8px; }
+        .study-body { flex: 1; overflow-y: auto; padding: 20px; }
+
+        /* Course grid */
+        .course-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(260px,1fr)); gap: 14px; }
+        .course-card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 14px; padding: 18px 20px;
+            border-left: 4px solid; cursor: pointer;
+            transition: .2s;
+        }
+        .course-card:hover { background: rgba(255,255,255,0.1); transform: translateY(-2px); }
+        .course-code { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; margin-bottom: 4px; }
+        .course-card-title { font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 4px; }
+        .course-desc { font-size: 12px; color: var(--text-secondary); }
+        .topic-count { font-size: 11px; margin-top: 8px; opacity: .6; }
+
+        /* Topic list */
+        .topic-row {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px; padding: 14px 16px; margin-bottom: 10px;
+            cursor: pointer; transition: .15s;
+        }
+        .topic-row:hover { background: rgba(255,255,255,0.1); }
+        .topic-num { font-size: 20px; font-weight: 800; color: var(--accent); min-width: 32px; }
+        .topic-info { flex: 1; }
+        .topic-name { font-size: 14px; font-weight: 600; color: #fff; }
+        .topic-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
+        .topic-go { font-size: 18px; color: var(--text-secondary); }
+        .course-actions { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .course-act-btn {
+            flex: 1; min-width: 140px; padding: 10px 14px;
+            background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px; color: #fff; font-size: 13px; cursor: pointer;
+            transition: .15s; text-align: center;
+        }
+        .course-act-btn:hover { background: rgba(233,69,96,0.2); border-color: var(--accent); }
+        .sources-section { margin-top: 20px; }
+        .sources-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px; }
+        .source-row { display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.04); border-radius: 8px; padding: 8px 12px; margin-bottom: 6px; }
+        .source-name { flex: 1; font-size: 12px; color: var(--text-secondary); }
+        .source-del { background: none; border: none; color: rgba(255,255,255,0.3); cursor: pointer; font-size: 14px; }
+        .source-del:hover { color: #ef4444; }
+        .source-upload-btn { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.07); border: 1px dashed rgba(255,255,255,0.2); border-radius: 10px; padding: 12px 16px; color: var(--text-secondary); font-size: 13px; cursor: pointer; transition: .15s; width: 100%; margin-top: 8px; }
+        .source-upload-btn:hover { border-color: var(--accent); color: #fff; }
+
+        /* Content view */
+        .content-tabs { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
+        .content-tab {
+            padding: 8px 16px; border-radius: 20px;
+            background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15);
+            color: var(--text-secondary); font-size: 13px; cursor: pointer; transition: .15s;
+        }
+        .content-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+        .content-tab:hover:not(.active) { background: rgba(255,255,255,0.15); color: #fff; }
+        .content-pane { display: none; }
+        .content-pane.active { display: block; }
+        .generate-btn {
+            display: block; width: 100%; padding: 14px;
+            background: var(--accent); border: none; border-radius: 12px;
+            color: #fff; font-size: 15px; font-weight: 700; cursor: pointer;
+            transition: .2s; margin-bottom: 20px;
+        }
+        .generate-btn:hover { opacity: .9; transform: translateY(-1px); }
+        .generate-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+        .study-content {
+            background: rgba(255,255,255,0.04); border-radius: 14px; padding: 20px;
+            color: #e2e8f0; line-height: 1.7; font-size: 14px;
+        }
+        .study-content h2 { color: var(--accent); font-size: 1rem; margin: 20px 0 8px; text-transform: uppercase; letter-spacing: .05em; }
+        .study-content h3 { color: #fff; font-size: 0.9rem; margin: 14px 0 6px; }
+        .study-content p { margin-bottom: 10px; }
+        .study-content ul, .study-content ol { padding-left: 20px; margin-bottom: 10px; }
+        .study-content li { margin-bottom: 4px; }
+        .study-content a { color: #60a5fa; }
+        .study-content strong { color: #fff; }
+
+        /* Flashcards */
+        .flashcard-wrap { perspective: 1000px; max-width: 560px; margin: 0 auto 20px; }
+        .flashcard {
+            width: 100%; min-height: 200px; position: relative;
+            transform-style: preserve-3d; transition: transform .5s;
+            cursor: pointer;
+        }
+        .flashcard.flipped { transform: rotateY(180deg); }
+        .fc-face {
+            position: absolute; inset: 0; backface-visibility: hidden;
+            border-radius: 16px; padding: 30px;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            text-align: center; min-height: 200px;
+        }
+        .fc-front { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); }
+        .fc-back { background: rgba(233,69,96,0.15); border: 1px solid rgba(233,69,96,0.3); transform: rotateY(180deg); }
+        .fc-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; opacity: .5; margin-bottom: 12px; }
+        .fc-text { font-size: 15px; color: #fff; line-height: 1.5; }
+        .fc-diff { font-size: 11px; padding: 2px 10px; border-radius: 12px; margin-top: 12px; font-weight: 600; }
+        .diff-basic { background: rgba(74,222,128,.2); color: #4ade80; }
+        .diff-intermediate { background: rgba(251,191,36,.2); color: #fbbf24; }
+        .diff-challenge { background: rgba(239,68,68,.2); color: #ef4444; }
+        .fc-nav { display: flex; align-items: center; justify-content: center; gap: 16px; margin: 16px 0; }
+        .fc-nav-btn { background: rgba(255,255,255,0.1); border: none; color: #fff; width: 40px; height: 40px; border-radius: 50%; font-size: 18px; cursor: pointer; transition: .15s; }
+        .fc-nav-btn:hover { background: rgba(255,255,255,0.2); }
+        .fc-count { font-size: 13px; color: var(--text-secondary); min-width: 60px; text-align: center; }
+
+        /* Quiz */
+        .quiz-q { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 18px; margin-bottom: 14px; }
+        .quiz-q-text { font-size: 14px; color: #fff; font-weight: 600; margin-bottom: 14px; line-height: 1.5; }
+        .quiz-q-num { font-size: 11px; color: var(--accent); font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+        .quiz-opt { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 6px; cursor: pointer; transition: .15s; font-size: 13px; color: var(--text-secondary); }
+        .quiz-opt:hover:not(.selected):not(.correct):not(.wrong) { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.25); color: #fff; }
+        .quiz-opt.selected { background: rgba(233,69,96,0.15); border-color: var(--accent); color: #fff; }
+        .quiz-opt.correct { background: rgba(74,222,128,.15); border-color: #4ade80; color: #4ade80; }
+        .quiz-opt.wrong { background: rgba(239,68,68,.1); border-color: #ef4444; color: #ef4444; }
+        .quiz-explanation { font-size: 12px; color: var(--text-secondary); margin-top: 10px; padding: 10px 12px; background: rgba(255,255,255,0.04); border-radius: 8px; display: none; line-height: 1.5; }
+        .quiz-explanation.show { display: block; }
+        .quiz-submit-bar { position: sticky; bottom: 0; background: var(--bg-primary); padding: 14px 0 4px; }
+        .quiz-submit-btn { width: 100%; padding: 14px; background: var(--accent); border: none; border-radius: 12px; color: #fff; font-size: 15px; font-weight: 700; cursor: pointer; }
+        .quiz-submit-btn:disabled { opacity: .4; cursor: not-allowed; }
+        .quiz-score { text-align: center; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 14px; margin-bottom: 20px; }
+        .quiz-score-num { font-size: 3rem; font-weight: 900; color: var(--accent); }
+        .loading-dots::after { content: ''; animation: dots 1.2s infinite; }
+        @keyframes dots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
     </style>
 </head>
 <body>
     <div class="drop-zone" id="dropZone">
         <div class="drop-zone-text">📎 Drop files here</div>
     </div>
+
+    <!-- Calculator -->
+    <div class="calculator" id="calculator">
+        <input type="text" class="calc-display" id="calcDisplay" readonly>
+        <div class="calc-buttons">
+            <button class="calc-btn clear" onclick="calcClear()">C</button>
+            <button class="calc-btn" onclick="calcInput('(')">(</button>
+            <button class="calc-btn" onclick="calcInput(')')">)</button>
+            <button class="calc-btn operator" onclick="calcInput('/')">÷</button>
+            <button class="calc-btn" onclick="calcInput('7')">7</button>
+            <button class="calc-btn" onclick="calcInput('8')">8</button>
+            <button class="calc-btn" onclick="calcInput('9')">9</button>
+            <button class="calc-btn operator" onclick="calcInput('*')">×</button>
+            <button class="calc-btn" onclick="calcInput('4')">4</button>
+            <button class="calc-btn" onclick="calcInput('5')">5</button>
+            <button class="calc-btn" onclick="calcInput('6')">6</button>
+            <button class="calc-btn operator" onclick="calcInput('-')">−</button>
+            <button class="calc-btn" onclick="calcInput('1')">1</button>
+            <button class="calc-btn" onclick="calcInput('2')">2</button>
+            <button class="calc-btn" onclick="calcInput('3')">3</button>
+            <button class="calc-btn operator" onclick="calcInput('+')">+</button>
+            <button class="calc-btn" onclick="calcInput('0')">0</button>
+            <button class="calc-btn" onclick="calcInput('.')">.</button>
+            <button class="calc-btn" onclick="calcInput('%')">%</button>
+            <button class="calc-btn equals" onclick="calcEquals()">=</button>
+        </div>
+    </div>
+
+    <!-- Notepad -->
+    <div class="notepad" id="notepad">
+        <div class="notepad-header" id="notepadHeader">
+            <h3>📝 Notes <span class="notepad-drag-hint">— drag to move</span></h3>
+            <button onclick="toggleNotepad()" style="background:none;border:none;color:white;cursor:pointer;font-size:1.1rem;">✕</button>
+        </div>
+        <textarea class="notepad-textarea" id="notepadText" placeholder="Type your notes here... (auto-saved)"></textarea>
+        <div class="notepad-actions">
+            <button class="notepad-btn clear" onclick="clearNotes()">🗑️ Clear</button>
+            <span class="notepad-autosave" id="notepadSavedMsg"></span>
+        </div>
+    </div>
+
+    <!-- Floating Notes Button — always visible on every screen -->
+    <button class="notes-fab" onclick="toggleNotepad()" title="Notes (press N)">📝</button>
+    <div class="notes-fab-hint">Notes<br>[N]</div>
+
+    <!-- OHS Tools Panel -->
+    <div class="ohs-overlay" id="ohsPanel">
+        <div class="ohs-header">
+            <h2>🦺 OHS Tools</h2>
+            <button class="ohs-close" onclick="toggleOHSPanel()">✕</button>
+        </div>
+        <div class="ohs-tabs">
+            <button class="ohs-tab active" onclick="switchOHSTab('twl', this)">🌡️ TWL</button>
+            <button class="ohs-tab" onclick="switchOHSTab('wbgt', this)">🌐 WBGT</button>
+            <button class="ohs-tab" onclick="switchOHSTab('humidex', this)">💧 Humidex</button>
+            <button class="ohs-tab" onclick="switchOHSTab('heatindex', this)">🔥 Heat Index</button>
+            <button class="ohs-tab" onclick="switchOHSTab('ppcc', this)">⚖️ Push/Pull/Carry</button>
+        </div>
+        <div class="ohs-body">
+
+            <!-- TWL Calculator -->
+            <div class="ohs-calc active" id="ohs-twl">
+                <h3>Thermal Work Limit (TWL)</h3>
+                <p class="calc-desc">Calculates the maximum safe metabolic rate (W/m²) for acclimatised workers in a specific thermal environment. Based on Brake &amp; Bates (2002).</p>
+                <div class="ohs-fields">
+                    <div class="ohs-field">
+                        <label>Dry Bulb Temp (°C)</label>
+                        <input type="number" id="twl-tdb" placeholder="e.g. 30" min="1" max="60" step="0.1">
+                    </div>
+                    <div class="ohs-field">
+                        <label>Wet Bulb Temp (°C) <small style="opacity:0.65;font-weight:400;">(wet wick thermometer)</small></label>
+                        <input type="number" id="twl-twb" placeholder="e.g. 25" min="0" max="60" step="0.1">
+                    </div>
+                    <div class="ohs-field">
+                        <label>Globe Temp (°C) <small style="opacity:0.65;font-weight:400;">(BBQ-ball thermometer)</small></label>
+                        <input type="number" id="twl-tg" placeholder="e.g. 35" min="0" max="80" step="0.1">
+                    </div>
+                    <div class="ohs-field">
+                        <label>Wind Speed (m/s)</label>
+                        <input type="number" id="twl-v" placeholder="e.g. 1.0" min="0" max="10" step="0.1">
+                    </div>
+                </div>
+                <button class="ohs-calc-btn" onclick="runTWL()">Calculate TWL</button>
+                <div class="ohs-result" id="twl-result">
+                    <div class="result-value" id="twl-value"></div>
+                    <div class="result-label">W/m² (Watts per square metre) — Thermal Work Limit</div>
+                    <span class="risk-badge" id="twl-risk"></span>
+                    <div class="result-actions" id="twl-actions"></div>
+                </div>
+                <hr class="ohs-divider">
+                <p class="ohs-ref">TWL Thresholds (AMSB / WA Mines): &gt;220 Low · 160–220 Moderate · 115–160 High · &lt;115 Critical<br>Assumes acclimatised worker, light work attire (~0.175 clo, im=0.45), globe temp used directly as MRT. Matches Aqualyte/Brake &amp; Bates standard output.</p>
+            </div>
+
+            <!-- WBGT Calculator -->
+            <div class="ohs-calc" id="ohs-wbgt">
+                <h3>Wet Bulb Globe Temperature (WBGT)</h3>
+                <p class="calc-desc">Calculates the WBGT heat stress index. Use outdoor formula when working in direct sun or near radiant heat sources. Use indoor formula for enclosed workplaces with no significant solar load.</p>
+
+                <!-- Indoor / Outdoor Toggle -->
+                <div class="wbgt-toggle-wrap">
+                    <button class="wbgt-toggle-btn active" id="wbgt-btn-outdoor" onclick="setWBGTMode('outdoor')">☀️ Outdoor</button>
+                    <button class="wbgt-toggle-btn" id="wbgt-btn-indoor" onclick="setWBGTMode('indoor')">🏭 Indoor</button>
+                </div>
+                <p class="wbgt-formula" id="wbgt-formula-display">Formula: WBGT = 0.7T<sub>W</sub> + 0.2T<sub>G</sub> + 0.1T<sub>D</sub></p>
+
+                <div class="ohs-fields">
+                    <div class="ohs-field">
+                        <label>Dry Bulb Temp — T<sub>D</sub> (°C)</label>
+                        <input type="number" id="wbgt-tdb" placeholder="e.g. 35" min="0" max="60" step="0.1">
+                    </div>
+                    <div class="ohs-field">
+                        <label>Wet Bulb Temp — T<sub>W</sub> (°C) <small style="opacity:0.65;font-weight:400;">(wet wick thermometer)</small></label>
+                        <input type="number" id="wbgt-twb" placeholder="e.g. 26" min="0" max="60" step="0.1">
+                    </div>
+                    <div class="ohs-field">
+                        <label>Globe Temp — T<sub>G</sub> (°C) <small style="opacity:0.65;font-weight:400;">(BBQ-ball thermometer)</small></label>
+                        <input type="number" id="wbgt-tg" placeholder="e.g. 40" min="0" max="80" step="0.1">
+                    </div>
+                    <div class="ohs-field">
+                        <label>Work Intensity</label>
+                        <select id="wbgt-intensity" style="width:100%;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:10px;padding:11px 14px;color:var(--text-primary);font-size:1rem;outline:none;">
+                            <option value="light">Light (&lt;230 W/m²)</option>
+                            <option value="moderate" selected>Moderate (230–345 W/m²)</option>
+                            <option value="heavy">Heavy (345–520 W/m²)</option>
+                            <option value="very_heavy">Very Heavy (&gt;520 W/m²)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Acclimatised toggle -->
+                <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;font-size:0.85rem;color:var(--text-secondary);">
+                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+                        <input type="checkbox" id="wbgt-acclimatised" checked style="width:16px;height:16px;accent-color:var(--accent);">
+                        Worker is acclimatised
+                    </label>
+                </div>
+
+                <button class="ohs-calc-btn" onclick="runWBGT()">Calculate WBGT</button>
+
+                <div class="ohs-result" id="wbgt-result">
+                    <div class="result-value" id="wbgt-value"></div>
+                    <div class="result-label">°C WBGT</div>
+                    <span class="risk-badge" id="wbgt-risk"></span>
+                    <div class="result-actions" id="wbgt-actions"></div>
+                </div>
+                <hr class="ohs-divider">
+                <p class="ohs-ref">ACGIH TLV thresholds — Light: 28/31°C · Moderate: 25/28°C · Heavy: 22.5/25°C · Very Heavy: 20/22.5°C (unacclimatised/acclimatised)</p>
+            </div>
+
+            <!-- Humidex Calculator -->
+            <div class="ohs-calc" id="ohs-humidex">
+                <h3>Humidex Heat Stress</h3>
+                <p class="calc-desc">Calculates the Humidex index and heat stress risk level for indoor workers. Based on OHCOW / CCOHS guidelines (Masterton &amp; Richardson, 1979).</p>
+                <div class="ohs-fields">
+                    <div class="ohs-field">
+                        <label>Air Temperature (°C) <small style="opacity:0.65;font-weight:400;">(Dry Bulb)</small></label>
+                        <input type="number" id="hx-temp" placeholder="e.g. 28" min="-10" max="60" step="0.1">
+                    </div>
+                    <div class="ohs-field">
+                        <label>Relative Humidity (%)</label>
+                        <input type="number" id="hx-rh" placeholder="e.g. 65" min="1" max="100" step="1">
+                    </div>
+                </div>
+                <button class="ohs-calc-btn" onclick="runHumidex()">Calculate Humidex</button>
+                <div class="ohs-result" id="hx-result">
+                    <div class="result-value" id="hx-value"></div>
+                    <div class="result-label">Humidex</div>
+                    <span class="risk-badge" id="hx-risk"></span>
+                    <div class="result-actions" id="hx-actions"></div>
+                </div>
+                <hr class="ohs-divider">
+                <p class="ohs-ref">Risk levels: &lt;30 No concern · 30–34 Little discomfort · 35–39 Some discomfort · 40–45 Great discomfort · ≥46 Dangerous</p>
+            </div>
+
+            <!-- NIOSH Heat Index Calculator -->
+            <div class="ohs-calc" id="ohs-heatindex">
+                <h3>NIOSH/OSHA Heat Index</h3>
+                <p class="calc-desc">Calculates the Heat Index (feels-like temperature) and OSHA-NIOSH risk level for outdoor and indoor workers. Based on the Rothfusz regression and OSHA-NIOSH Heat Safety Tool thresholds.</p>
+                <div class="ohs-fields">
+                    <div class="ohs-field">
+                        <label>Air Temperature (°C) <span style="color:#94a3b8;font-size:11px">(Dry Bulb)</span></label>
+                        <input type="number" id="hi-temp" value="35" step="0.5">
+                    </div>
+                    <div class="ohs-field">
+                        <label>Relative Humidity (%)</label>
+                        <input type="number" id="hi-rh" value="60" step="1" min="1" max="100">
+                    </div>
+                </div>
+                <button class="ohs-calc-btn" onclick="runHeatIndex()">Calculate Heat Index</button>
+                <div class="ohs-result" id="hi-result">
+                    <div class="result-value" id="hi-value"></div>
+                    <div class="result-label">°C Heat Index (feels like)</div>
+                    <span class="risk-badge" id="hi-risk"></span>
+                    <div class="result-actions" id="hi-actions"></div>
+                </div>
+                <hr class="ohs-divider">
+                <p class="ohs-ref">OSHA-NIOSH risk levels: &lt;33°C Lower · 33–39°C Moderate · 39–46°C High · &gt;46°C Very High/Extreme &nbsp;|&nbsp; Source: <a href="https://www.cdc.gov/niosh/heat-stress/communication-resources/app.html" target="_blank" style="color:#60a5fa">CDC NIOSH Heat Safety Tool</a></p>
+            </div>
+
+            <!-- WorkSafeBC Push/Pull/Carry Calculator -->
+            <div class="ohs-calc" id="ohs-ppcc">
+                <div class="ppcc-iframe-wrap">
+                    <iframe src="http://worksafebcmedia.com/misc/calculator/ppcc/#welcome"
+                            title="WorkSafeBC Push/Pull/Carry Calculator"
+                            loading="lazy"></iframe>
+                </div>
+                <p class="ohs-ref" style="margin-top:8px;">WorkSafeBC Push/Pull/Carry Calculator © 2020 WorkSafeBC &nbsp;|&nbsp; <a href="http://worksafebcmedia.com/misc/calculator/ppcc/" target="_blank" style="color:#60a5fa">Open full screen ↗</a></p>
+            </div>
+
+        </div><!-- ohs-body -->
+    </div><!-- ohs-overlay -->
+
+    <!-- OHS Study Panel -->
+    <div class="study-overlay" id="studyPanel">
+        <div class="study-header">
+            <button class="study-back" id="studyBackBtn" onclick="studyBack()">← Back</button>
+            <div class="study-title" id="studyPanelTitle">📚 OHS Study</div>
+            <div class="study-actions-bar" id="studyActionsBar"></div>
+            <button class="study-back" onclick="closeStudyPanel()">✕</button>
+        </div>
+        <div class="study-body" id="studyBody">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
     <div class="header">
         <h1><span class="logo">🛡️</span> SafetyNomad AI</h1>
         <div class="status">
@@ -346,14 +1071,19 @@
             <button class="quick-btn" onclick="quickAction('Clean my Desktop')">🖥️ Desktop</button>
             <button class="quick-btn" onclick="quickAction('What should I focus on today?')">📋 Today</button>
             <button class="quick-btn" onclick="quickAction('Check my crypto portfolio')">💰 Crypto</button>
-            <button class="quick-btn" onclick="quickAction('OHS study tip')">📚 OHS</button>
+            <button class="quick-btn" onclick="openStudyPanel()">📚 OHS Study</button>
             <button class="quick-btn" onclick="quickAction('Give me a quick math problem to practice')">🔢 Math</button>
             <button class="quick-btn" onclick="quickAction('Teach me a Khmer phrase')">🇰🇭 Khmer</button>
             <button class="quick-btn" onclick="quickAction('What do you remember about me?')">🧠 Memory</button>
+            <button class="quick-btn" onclick="quickAction('Card research mode')">🃏 Cards</button>
+            <button class="quick-btn" onclick="quickAction('AI learning menu')">🤖 AI</button>
+            <button class="quick-btn" onclick="toggleOHSPanel()">🦺 OHS Tools</button>
+            <button class="quick-btn" onclick="toggleCalculator()">🧮 Calc</button>
+            <button class="quick-btn" onclick="toggleNotepad()">📝 Notes</button>
         </div>
         <div class="input-wrapper">
             <button class="btn btn-voice" id="voiceBtn" onclick="toggleVoice()">🎤</button>
-            <button class="btn btn-upload" id="uploadBtn" onclick="document.getElementById('fileInput').click()">📎</button>
+            <label for="fileInput" class="btn btn-upload" id="uploadBtn">📎</label>
             <input type="file" id="fileInput" accept="image/*,.pdf,.doc,.docx,.txt,.csv" multiple style="display:none" onchange="handleFileSelect(event)">
             <textarea
                 id="messageInput"
@@ -588,10 +1318,15 @@
         }
 
         function formatMessage(text) {
-            // Basic markdown-like formatting
+            // Markdown formatting
             return text
+                // Links: [text](url) -> clickable link
+                .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color: #60a5fa; text-decoration: underline;">$1</a>')
+                // Bold
                 .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                // Italic
                 .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                // Line breaks
                 .replace(/\n/g, '<br>');
         }
 
@@ -640,6 +1375,853 @@
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/static/sw.js')
                 .catch(err => console.log('SW registration failed:', err));
+        }
+
+        // Calculator functions
+        function toggleCalculator() {
+            const calc = document.getElementById('calculator');
+            calc.classList.toggle('show');
+        }
+
+        function calcInput(val) {
+            document.getElementById('calcDisplay').value += val;
+        }
+
+        function calcClear() {
+            document.getElementById('calcDisplay').value = '';
+        }
+
+        function calcEquals() {
+            const display = document.getElementById('calcDisplay');
+            try {
+                // Handle percentage
+                let expr = display.value.replace(/%/g, '/100');
+                display.value = eval(expr);
+            } catch(e) {
+                display.value = 'Error';
+            }
+        }
+
+        // Notepad functions
+        function toggleNotepad() {
+            const notepad = document.getElementById('notepad');
+            notepad.classList.toggle('show');
+        }
+
+        function clearNotes() {
+            if (confirm('Clear all notes?')) {
+                document.getElementById('notepadText').value = '';
+                localStorage.removeItem('safetynomad_notes');
+                document.getElementById('notepadSavedMsg').textContent = '';
+            }
+        }
+
+        // Auto-save on input
+        document.addEventListener('DOMContentLoaded', () => {
+            const ta = document.getElementById('notepadText');
+            const msg = document.getElementById('notepadSavedMsg');
+            // Load notes from server (synced with floating desktop app)
+            fetch('/api/notes').then(r => r.json()).then(d => {
+                if (d.content) ta.value = d.content;
+                else {
+                    // Migrate old localStorage notes if any
+                    const old = localStorage.getItem('safetynomad_notes');
+                    if (old) ta.value = old;
+                }
+            }).catch(() => {
+                const old = localStorage.getItem('safetynomad_notes');
+                if (old) ta.value = old;
+            });
+
+            // Keyboard shortcut: press N (when not typing in an input) to toggle notes
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'n' || e.key === 'N') {
+                    const tag = document.activeElement.tagName;
+                    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+                    toggleNotepad();
+                }
+            });
+
+            // Auto-save to server as user types
+            let saveTimer;
+            ta.addEventListener('input', () => {
+                clearTimeout(saveTimer);
+                msg.textContent = 'saving...';
+                saveTimer = setTimeout(() => {
+                    fetch('/api/notes', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({content: ta.value})
+                    }).then(() => {
+                        msg.textContent = 'saved';
+                        setTimeout(() => { msg.textContent = ''; }, 2000);
+                    }).catch(() => {
+                        // Fallback to localStorage if server unavailable
+                        localStorage.setItem('safetynomad_notes', ta.value);
+                        msg.textContent = 'saved locally';
+                        setTimeout(() => { msg.textContent = ''; }, 2000);
+                    });
+                }, 800);
+            });
+
+            // Drag support — mouse
+            const notepad = document.getElementById('notepad');
+            const header = document.getElementById('notepadHeader');
+            let dragging = false, ox = 0, oy = 0;
+            header.addEventListener('mousedown', (e) => {
+                if (e.target.tagName === 'BUTTON') return;
+                dragging = true;
+                const r = notepad.getBoundingClientRect();
+                notepad.style.left = r.left + 'px';
+                notepad.style.top  = r.top  + 'px';
+                notepad.style.bottom = 'auto';
+                ox = e.clientX - r.left;
+                oy = e.clientY - r.top;
+                e.preventDefault();
+            });
+            document.addEventListener('mousemove', (e) => {
+                if (!dragging) return;
+                notepad.style.left = (e.clientX - ox) + 'px';
+                notepad.style.top  = (e.clientY - oy) + 'px';
+            });
+            document.addEventListener('mouseup', () => { dragging = false; });
+
+            // Drag support — touch
+            header.addEventListener('touchstart', (e) => {
+                if (e.target.tagName === 'BUTTON') return;
+                dragging = true;
+                const t = e.touches[0];
+                const r = notepad.getBoundingClientRect();
+                notepad.style.left = r.left + 'px';
+                notepad.style.top  = r.top  + 'px';
+                notepad.style.bottom = 'auto';
+                ox = t.clientX - r.left;
+                oy = t.clientY - r.top;
+                e.preventDefault();
+            }, { passive: false });
+            document.addEventListener('touchmove', (e) => {
+                if (!dragging) return;
+                const t = e.touches[0];
+                notepad.style.left = (t.clientX - ox) + 'px';
+                notepad.style.top  = (t.clientY - oy) + 'px';
+            });
+            document.addEventListener('touchend', () => { dragging = false; });
+        });
+
+        // ─── OHS Tools ───────────────────────────────────────────────────────
+
+        function toggleOHSPanel() {
+            document.getElementById('ohsPanel').classList.toggle('show');
+        }
+
+        function switchOHSTab(id, btn) {
+            document.querySelectorAll('.ohs-calc').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.ohs-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById('ohs-' + id).classList.add('active');
+            btn.classList.add('active');
+        }
+
+        // ─── WBGT Calculator ─────────────────────────────────────────────────
+        let wbgtMode = 'outdoor';
+
+        function setWBGTMode(mode) {
+            wbgtMode = mode;
+            document.getElementById('wbgt-btn-outdoor').classList.toggle('active', mode === 'outdoor');
+            document.getElementById('wbgt-btn-indoor').classList.toggle('active', mode === 'indoor');
+            const formulaEl = document.getElementById('wbgt-formula-display');
+            const tdbField  = document.getElementById('wbgt-tdb').closest('.ohs-field');
+            if (mode === 'outdoor') {
+                formulaEl.innerHTML = 'Formula: WBGT = 0.7T<sub>W</sub> + 0.2T<sub>G</sub> + 0.1T<sub>D</sub>';
+                tdbField.style.opacity = '1';
+                tdbField.style.pointerEvents = 'auto';
+            } else {
+                formulaEl.innerHTML = 'Formula: WBGT = 0.7T<sub>W</sub> + 0.3T<sub>G</sub> &nbsp;(no dry bulb needed indoors)';
+                tdbField.style.opacity = '0.4';
+                tdbField.style.pointerEvents = 'none';
+            }
+            document.getElementById('wbgt-result').classList.remove('show', 'risk-low', 'risk-mod', 'risk-high', 'risk-crit');
+        }
+
+        function runWBGT() {
+            try {
+                const twb = parseFloat(document.getElementById('wbgt-twb').value);
+                const tg  = parseFloat(document.getElementById('wbgt-tg').value);
+                const tdb = parseFloat(document.getElementById('wbgt-tdb').value);
+
+                // Read intensity with fallback
+                const sel = document.getElementById('wbgt-intensity');
+                const intensity = (sel && sel.value) ? sel.value : 'moderate';
+                const acclimatised = document.getElementById('wbgt-acclimatised').checked;
+
+                if (isNaN(twb) || isNaN(tg)) { alert('Please enter at least Wet Bulb and Globe temperatures.'); return; }
+                if (wbgtMode === 'outdoor' && isNaN(tdb)) { alert('Dry Bulb is required for the outdoor formula.'); return; }
+
+                let wbgt;
+                if (wbgtMode === 'outdoor') {
+                    wbgt = 0.7 * twb + 0.2 * tg + 0.1 * tdb;
+                } else {
+                    wbgt = 0.7 * twb + 0.3 * tg;
+                }
+                wbgt = Math.round(wbgt * 10) / 10;
+
+                // ACGIH TLV thresholds [action limit, TLV] for acclimatised workers
+                const limits = {
+                    light:      [28.0, 31.0],
+                    moderate:   [25.0, 28.0],
+                    heavy:      [22.5, 25.0],
+                    very_heavy: [20.0, 22.5]
+                };
+                const thresholds = limits[intensity] || limits['moderate'];
+                const al  = thresholds[0];
+                const tlv = thresholds[1];
+                const limit       = acclimatised ? tlv : al;
+                const actionLimit = acclimatised ? al : (al - 2);
+
+                const intensityLabels = { light: 'Light', moderate: 'Moderate', heavy: 'Heavy', very_heavy: 'Very Heavy' };
+                const iLabel = intensityLabels[intensity] || 'Moderate';
+
+                let riskClass, riskText, actions;
+                if (wbgt <= actionLimit) {
+                    riskClass = 'risk-low'; riskText = 'Within Safe Limits';
+                    actions = 'WBGT is below the action limit (' + actionLimit + '\u00b0C) for ' + iLabel + ' work. Standard heat stress controls apply. Maintain hydration and monitor conditions.';
+                } else if (wbgt <= limit) {
+                    riskClass = 'risk-mod'; riskText = 'Action Limit Exceeded';
+                    actions = 'WBGT is between the action limit (' + actionLimit + '\u00b0C) and TLV (' + limit + '\u00b0C) for ' + iLabel + ' work. Implement engineering/admin controls. Increase rest breaks. Hydration required (500 mL/h minimum). Buddy system recommended.';
+                } else if (wbgt <= limit + 3) {
+                    riskClass = 'risk-high'; riskText = 'TLV Exceeded \u2014 ' + iLabel + ' Work Not Safe';
+                    actions = 'WBGT (' + wbgt + '\u00b0C) exceeds the ACGIH TLV of ' + limit + '\u00b0C for ' + iLabel + ' work' + (acclimatised ? '' : ' (unacclimatised)') + '. Reduce work intensity, increase rest time, or stop work. Engineering controls (cooling, ventilation) must be implemented.';
+                } else {
+                    riskClass = 'risk-crit'; riskText = 'Danger \u2014 Stop ' + iLabel + ' Work';
+                    actions = 'WBGT (' + wbgt + '\u00b0C) is critically above the ACGIH TLV of ' + limit + '\u00b0C. Stop ' + iLabel.toLowerCase() + ' work immediately. Move workers to a cool area. Monitor for heat illness. Only essential tasks with medical supervision.';
+                }
+
+                const el = document.getElementById('wbgt-result');
+                document.getElementById('wbgt-value').textContent = wbgt + '\u00b0C';
+                document.getElementById('wbgt-risk').textContent = riskText;
+                document.getElementById('wbgt-risk').className = 'risk-badge ' + riskClass;
+                document.getElementById('wbgt-actions').textContent = actions;
+                el.className = 'ohs-result show ' + riskClass;
+
+                // Scroll result into view
+                el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+            } catch(err) {
+                alert('Calculation error: ' + err.message);
+            }
+        }
+
+        // ─── TWL Calculator (Brake & Bates 2002 biophysical model) ───────────
+        function runTWL() {
+            const tdb = parseFloat(document.getElementById('twl-tdb').value);
+            const twb = parseFloat(document.getElementById('twl-twb').value);
+            const tg  = parseFloat(document.getElementById('twl-tg').value);
+            const v   = parseFloat(document.getElementById('twl-v').value);
+
+            if ([tdb, twb, tg, v].some(isNaN)) {
+                alert('Please fill in all four fields.');
+                return;
+            }
+            if (twb > tdb) { alert('Wet bulb cannot exceed dry bulb temperature.'); return; }
+            if (v < 0) { alert('Wind speed cannot be negative.'); return; }
+
+            const twl = calcTWL(tdb, twb, tg, v);
+            const el  = document.getElementById('twl-result');
+            document.getElementById('twl-value').textContent = twl + ' W/m²';
+            el.className = 'ohs-result show';
+
+            let riskClass, riskText, actions;
+            if (twl > 220) {
+                riskClass = 'risk-low';  riskText = 'Low Risk';
+                actions = 'No restrictions on self-paced work for acclimatised, well-hydrated workers. Continue standard heat stress monitoring.';
+                el.classList.add('risk-low');
+            } else if (twl > 160) {
+                riskClass = 'risk-mod';  riskText = 'Moderate Risk';
+                actions = 'Heat stress environment. Implement heat stress management plan. Ensure acclimatisation and adequate hydration (≥600 mL/h). Monitor workers for heat illness symptoms.';
+            } else if (twl > 115) {
+                riskClass = 'risk-high'; riskText = 'High Risk';
+                actions = 'Restricted work. Self-paced workers only. Mandatory work-rest schedules. Hydration ≥1.2 L/h. Buddy system required. Consider ceasing non-essential work.';
+            } else {
+                riskClass = 'risk-crit'; riskText = 'Critical — Stop Work';
+                actions = 'STOP all but essential work. 20 min work / 40 min rest (shaded, cool area). Heart rate monitoring required (≤115 bpm). Immediate medical supervision. Evacuate if possible.';
+            }
+            el.className = 'ohs-result show ' + riskClass;
+            document.getElementById('twl-risk').textContent = riskText;
+            document.getElementById('twl-risk').className = 'risk-badge ' + riskClass;
+            document.getElementById('twl-actions').textContent = actions;
+        }
+
+        function calcTWL(tdb, twb, tg, v) {
+            // Cap wind at 4 m/s (TWL protocol limit), minimum 0.1 for stability
+            v = Math.min(Math.max(v, 0.1), 4.0);
+
+            const Tsk   = 35.0;     // Skin temperature (°C)
+            const Psk   = 5.627;    // Saturated VP at skin (kPa)
+            // Clothing: ~0.175 clo light work attire (matches Aqualyte/Brake & Bates std)
+            const Rcl   = 0.027;    // Clothing thermal resistance (m²K/W) ≈ 0.175 clo
+            const im    = 0.45;     // Clothing vapour permeability index
+            const fcl   = 1.05;     // Clothing area factor
+            const hr    = 4.7;      // Radiative heat transfer coefficient (W/m²K)
+            const srMaxW = 452;     // Max sweat cooling: 0.667 kg/m²h × 2426 kJ/kg / 3.6
+
+            // 1. Use globe temperature directly as MRT (consistent with WBGT standard)
+            const Tr = tg;
+
+            // 2. Ambient vapour pressure (psychrometric equation, P ≈ 101.325 kPa)
+            const Pws_wb = 0.61078 * Math.pow(10, 7.5 * twb / (237.3 + twb));
+            const Pa = Math.max(0, Pws_wb - 0.0799 * (tdb - twb));
+
+            // 3. Convective heat transfer coefficient
+            const hc = Math.max(2.38 * Math.pow(Math.abs(Tsk - tdb), 0.25), 12.1 * Math.sqrt(v));
+
+            // 4. Operative temperature
+            const Top = (hc * tdb + hr * Tr) / (hc + hr);
+
+            // 5. Dry heat exchange (+ = body cooling, − = body gaining heat)
+            const Dry = (Tsk - Top) / (Rcl + 1 / (fcl * (hc + hr)));
+
+            // 6. Maximum evaporative capacity (clothing-limited)
+            const he   = 16.5 * im * hc;
+            const Recl = Rcl / (im * 16.5);
+            const Emax = (Pa < Psk) ? (Psk - Pa) / (Recl + 1 / (fcl * he)) : 0;
+
+            // 7. Actual evaporative cooling (physiology or environment limited)
+            const Esweat = Math.min(srMaxW, Emax);
+
+            // 8. TWL = total safe heat dissipation capacity
+            return Math.round(Math.max(0, Dry + Esweat));
+        }
+
+        // ─── Humidex Calculator (Masterton & Richardson 1979) ─────────────────
+        function runHumidex() {
+            const T  = parseFloat(document.getElementById('hx-temp').value);
+            const RH = parseFloat(document.getElementById('hx-rh').value);
+
+            if (isNaN(T) || isNaN(RH)) { alert('Please enter temperature and humidity.'); return; }
+            if (RH < 1 || RH > 100)    { alert('Relative humidity must be between 1 and 100%.'); return; }
+
+            const hx = calcHumidex(T, RH);
+            const el = document.getElementById('hx-result');
+            document.getElementById('hx-value').textContent = hx.toFixed(1);
+
+            let riskClass, riskText, actions;
+            if (hx < 30) {
+                riskClass = 'risk-low';  riskText = 'No Heat Concern';
+                actions = 'No heat-specific controls required. Maintain normal hydration.';
+            } else if (hx < 35) {
+                riskClass = 'risk-low';  riskText = 'Little Discomfort';
+                actions = 'Post alerts. Provide cool water. Remind workers to drink regularly. Monitor for any discomfort.';
+            } else if (hx < 40) {
+                riskClass = 'risk-mod';  riskText = 'Some Discomfort';
+                actions = 'Caution for strenuous work. Increase rest breaks. Provide cool water (10–15°C), minimum 1 cup every 20 min. Buddy system recommended.';
+            } else if (hx < 46) {
+                riskClass = 'risk-high'; riskText = 'Great Discomfort';
+                actions = 'Work-rest schedules required:\n• Humidex 40–41: 30 min rest/hour\n• Humidex 42–44: 45 min rest/hour\nCool water mandatory. Avoid exertion. Reschedule non-essential tasks.';
+            } else {
+                riskClass = 'risk-crit'; riskText = 'Dangerous';
+                actions = 'Heat stroke possible. Only medically supervised work can continue. Evacuate workers to cool areas. Call medical assistance if symptoms appear (dizziness, nausea, confusion).';
+            }
+            el.className = 'ohs-result show ' + riskClass;
+            document.getElementById('hx-risk').textContent = riskText;
+            document.getElementById('hx-risk').className = 'risk-badge ' + riskClass;
+            document.getElementById('hx-actions').textContent = actions;
+        }
+
+        function calcHumidex(T, RH) {
+            // Actual vapour pressure directly from RH × e_sat(T) — matches OHCOW/course method
+            const e_sat = 6.1078 * Math.pow(10, 7.5 * T / (237.3 + T));
+            const e = (RH / 100) * e_sat;
+            return T + 0.5555 * (e - 10.0);
+        }
+
+        // ─── NIOSH/OSHA Heat Index Calculator ────────────────────────────────
+        function runHeatIndex() {
+            const T_C = parseFloat(document.getElementById('hi-temp').value);
+            const RH  = parseFloat(document.getElementById('hi-rh').value);
+            if (isNaN(T_C) || isNaN(RH)) { alert('Please enter temperature and humidity.'); return; }
+            if (RH < 1 || RH > 100) { alert('Relative humidity must be between 1 and 100%.'); return; }
+
+            const hi  = calcHeatIndex(T_C, RH);
+            const el  = document.getElementById('hi-result');
+            document.getElementById('hi-value').textContent = hi.toFixed(1);
+
+            let riskClass, riskText, actions;
+            if (hi < 33) {
+                riskClass = 'risk-low'; riskText = 'Lower Risk';
+                actions = 'Heat index is below the moderate threshold. Little to no heat-related illness risk from heat alone. Maintain hydration (water every 15–20 min), take regular breaks, and be aware if you are wearing heavy/non-breathable clothing or working in direct sun.';
+            } else if (hi < 39) {
+                riskClass = 'risk-mod'; riskText = 'Moderate Risk';
+                actions = 'Use caution. Drink water frequently (every 15–20 min). Take scheduled breaks in shade or a cool area. Avoid strenuous work during the hottest part of the day. Monitor coworkers for heat illness signs (dizziness, nausea, weakness). New/returning workers should be acclimatised gradually.';
+            } else if (hi < 46) {
+                riskClass = 'risk-high'; riskText = 'High Risk';
+                actions = 'Extra precautions required. Increase rest breaks and shade/cool area access. Implement a buddy system — never work alone. Limit exposure for new or returning workers. Ensure cool drinking water nearby and encourage frequent sips. Watch for heat cramps, heat exhaustion, and heat stroke. Have an emergency action plan ready.';
+            } else {
+                riskClass = 'risk-crit'; riskText = 'Very High / Extreme Risk';
+                actions = 'DANGER — limit or stop strenuous outdoor work. Active cooling measures required (cooling fans, misting, cool towels). Only essential tasks permitted with medical supervision. Workers must be monitored continuously. Immediately move anyone showing heat illness symptoms to a cool area and call emergency services if heat stroke is suspected (hot dry skin, confusion, loss of consciousness).';
+            }
+
+            el.className = 'ohs-result show ' + riskClass;
+            document.getElementById('hi-risk').textContent = riskText;
+            document.getElementById('hi-risk').className = 'risk-badge ' + riskClass;
+            document.getElementById('hi-actions').textContent = actions;
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // ── OHS Study Platform ─────────────────────────────────────────────
+        const STUDY_API = '';
+        let studyScreen = 'courses'; // courses | topics | content
+        let studyCourse = null;
+        let studyTopic = null;
+        let studyContent = {}; // cached generated content per topic
+        let studyFlashcards = [];
+        let studyFCIdx = 0;
+        let studyQuiz = [];
+        let studyAnswers = {};
+        let studyAbort = null;
+
+        function openStudyPanel() {
+            document.getElementById('studyPanel').classList.add('show');
+            showStudyCourses();
+        }
+        function closeStudyPanel() {
+            document.getElementById('studyPanel').classList.remove('show');
+        }
+        function studyBack() {
+            if (studyScreen === 'content') showStudyTopics(studyCourse);
+            else if (studyScreen === 'topics') showStudyCourses();
+            else closeStudyPanel();
+        }
+
+        async function showStudyCourses() {
+            studyScreen = 'courses';
+            document.getElementById('studyPanelTitle').textContent = '📚 OHS Study';
+            document.getElementById('studyActionsBar').innerHTML = '';
+            document.getElementById('studyBackBtn').textContent = '✕ Close';
+            const body = document.getElementById('studyBody');
+            body.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;padding:4px 0 16px">University of Fredericton — Safety Officer Training Program</div><div class="course-grid" id="courseGrid"><div style="color:var(--text-secondary)">Loading courses<span class="loading-dots"></span></div></div>';
+            try {
+                const r = await fetch('/api/ohs/chapters');
+                const chapters = await r.json();
+                document.getElementById('courseGrid').innerHTML = chapters.map(c => `
+                    <div class="course-card" style="border-color:${c.color}" onclick="showStudyTopics(${JSON.stringify(c).replace(/"/g,'&quot;')})">
+                        <div class="course-code" style="color:${c.color}">${c.code}</div>
+                        <div class="course-card-title">${c.title}</div>
+                        <div class="course-desc">${c.description}</div>
+                        <div class="topic-count">${c.topicCount} topics</div>
+                    </div>`).join('');
+                // Full program review card
+                document.getElementById('courseGrid').innerHTML += `
+                    <div class="course-card" style="border-color:#a78bfa" onclick="showProgramReview()">
+                        <div class="course-code" style="color:#a78bfa">ALL COURSES</div>
+                        <div class="course-card-title">🎓 Full Program Review</div>
+                        <div class="course-desc">Cross-course flashcards and quizzes covering all 10 OHS courses.</div>
+                        <div class="topic-count">40 flashcards · 30 quiz questions</div>
+                    </div>`;
+            } catch(e) {
+                document.getElementById('courseGrid').innerHTML = `<div style="color:#ef4444">Failed to load: ${e.message}</div>`;
+            }
+        }
+
+        async function showStudyTopics(course) {
+            studyScreen = 'topics';
+            studyCourse = course;
+            document.getElementById('studyPanelTitle').textContent = `${course.code}: ${course.title}`;
+            document.getElementById('studyBackBtn').textContent = '← Courses';
+            document.getElementById('studyActionsBar').innerHTML = `<button class="study-back" onclick="showSourcesModal(${course.id})" title="Manage sources">📂 Sources</button>`;
+            const body = document.getElementById('studyBody');
+            body.innerHTML = `<div style="color:var(--text-secondary);font-size:12px;margin-bottom:16px">${course.description}</div>
+            <div class="course-actions">
+                <button class="course-act-btn" onclick="loadCourseFlashcards(${course.id})">🃏 Course Flashcards</button>
+                <button class="course-act-btn" onclick="loadCourseQuiz(${course.id})">❓ Course Exam</button>
+            </div>
+            <div id="topicList"><div style="color:var(--text-secondary)">Loading<span class="loading-dots"></span></div></div>
+            <div id="sourcesModal" style="display:none"></div>`;
+            const r = await fetch(`/api/ohs/chapters/${course.id}/topics`);
+            const topics = await r.json();
+            document.getElementById('topicList').innerHTML = topics.map(t => `
+                <div class="topic-row" onclick="showStudyContent(${JSON.stringify(t).replace(/"/g,'&quot;')})">
+                    <div class="topic-num">${t.id}</div>
+                    <div class="topic-info">
+                        <div class="topic-name">${t.title}</div>
+                        <div class="topic-sub">${t.subtitle||''}</div>
+                    </div>
+                    <div class="topic-go">›</div>
+                </div>`).join('');
+        }
+
+        async function showStudyContent(topic) {
+            studyScreen = 'content';
+            studyTopic = topic;
+            document.getElementById('studyPanelTitle').textContent = topic.title;
+            document.getElementById('studyBackBtn').textContent = '← Topics';
+            document.getElementById('studyActionsBar').innerHTML = '';
+            const cacheKey = `${studyCourse.id}_${topic.id}`;
+            const body = document.getElementById('studyBody');
+            body.innerHTML = `
+            <div class="content-tabs">
+                <button class="content-tab active" onclick="switchStudyTab('overview',this)">📖 Overview</button>
+                <button class="content-tab" onclick="switchStudyTab('flashcards',this)">🃏 Flashcards</button>
+                <button class="content-tab" onclick="switchStudyTab('quiz',this)">❓ Quiz</button>
+            </div>
+            <div class="content-pane active" id="pane-overview">
+                <button class="generate-btn" id="genOverviewBtn" onclick="generateOverview('${cacheKey}')">⚡ Generate Study Module</button>
+                <div id="overviewContent">${studyContent[cacheKey] ? '<div class="study-content">'+marked.parse(studyContent[cacheKey])+'</div>' : ''}</div>
+            </div>
+            <div class="content-pane" id="pane-flashcards">
+                <button class="generate-btn" id="genFCBtn" onclick="generateFlashcards()">⚡ Generate Flashcards</button>
+                <div id="fcContent"></div>
+            </div>
+            <div class="content-pane" id="pane-quiz">
+                <button class="generate-btn" id="genQuizBtn" onclick="generateQuiz()">⚡ Generate Quiz</button>
+                <div id="quizContent"></div>
+            </div>`;
+        }
+
+        function switchStudyTab(name, btn) {
+            document.querySelectorAll('.content-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.content-pane').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('pane-'+name).classList.add('active');
+        }
+
+        async function generateOverview(cacheKey) {
+            if (studyAbort) studyAbort.abort();
+            studyAbort = new AbortController();
+            const btn = document.getElementById('genOverviewBtn');
+            btn.disabled = true; btn.textContent = '⏳ Generating…';
+            const el = document.getElementById('overviewContent');
+            el.innerHTML = '<div class="study-content" id="streamTarget" style="min-height:60px;color:var(--text-secondary)">Building study module<span class="loading-dots"></span></div>';
+            let text = '';
+            try {
+                const res = await fetch('/api/ohs/generate', {
+                    method: 'POST', signal: studyAbort.signal,
+                    headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({chapterId: studyCourse.id, topicId: studyTopic.id, topicTitle: studyTopic.title})
+                });
+                await readStudySSE(res, chunk => {
+                    if (chunk.text) {
+                        text += chunk.text;
+                        document.getElementById('streamTarget').innerHTML = marked.parse(text);
+                    }
+                });
+                studyContent[cacheKey] = text;
+                el.innerHTML = '<div class="study-content">'+marked.parse(text)+'</div>';
+            } catch(e) {
+                if (e.name !== 'AbortError') el.innerHTML = `<div style="color:#ef4444">Error: ${e.message}</div>`;
+            } finally {
+                btn.disabled = false; btn.textContent = '↺ Regenerate';
+            }
+        }
+
+        async function generateFlashcards() {
+            const btn = document.getElementById('genFCBtn');
+            btn.disabled = true; btn.textContent = '⏳ Generating…';
+            document.getElementById('fcContent').innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:20px">Generating flashcards<span class="loading-dots"></span></div>';
+            try {
+                const r = await fetch('/api/ohs/flashcards', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({chapterId: studyCourse.id, topicId: studyTopic.id, topicTitle: studyTopic.title})
+                });
+                studyFlashcards = await r.json();
+                studyFCIdx = 0;
+                renderFlashcard();
+            } catch(e) {
+                document.getElementById('fcContent').innerHTML = `<div style="color:#ef4444">Error: ${e.message}</div>`;
+            } finally {
+                btn.disabled = false; btn.textContent = '↺ New Flashcards';
+            }
+        }
+
+        function renderFlashcard() {
+            if (!studyFlashcards.length) return;
+            const fc = studyFlashcards[studyFCIdx];
+            const diffClass = 'diff-'+(fc.difficulty||'basic');
+            document.getElementById('fcContent').innerHTML = `
+            <div class="flashcard-wrap">
+                <div class="flashcard" id="theCard" onclick="this.classList.toggle('flipped')">
+                    <div class="fc-face fc-front">
+                        <div class="fc-label">Question</div>
+                        <div class="fc-text">${escHtml(fc.question||'')}</div>
+                        <span class="fc-diff ${diffClass}">${fc.difficulty||'basic'}</span>
+                    </div>
+                    <div class="fc-face fc-back">
+                        <div class="fc-label">Answer</div>
+                        <div class="fc-text">${escHtml(fc.answer||'')}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="fc-nav">
+                <button class="fc-nav-btn" onclick="fcNav(-1)">‹</button>
+                <span class="fc-count">${studyFCIdx+1} / ${studyFlashcards.length}</span>
+                <button class="fc-nav-btn" onclick="fcNav(1)">›</button>
+            </div>
+            <p style="text-align:center;font-size:12px;color:var(--text-secondary)">Tap card to flip · Arrow keys to navigate</p>`;
+        }
+
+        function fcNav(d) {
+            studyFCIdx = Math.max(0, Math.min(studyFlashcards.length-1, studyFCIdx+d));
+            const card = document.getElementById('theCard');
+            if (card) card.classList.remove('flipped');
+            renderFlashcard();
+        }
+
+        async function generateQuiz() {
+            const btn = document.getElementById('genQuizBtn');
+            btn.disabled = true; btn.textContent = '⏳ Generating…';
+            document.getElementById('quizContent').innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:20px">Generating quiz<span class="loading-dots"></span></div>';
+            try {
+                const r = await fetch('/api/ohs/quiz', {
+                    method: 'POST', headers: {'Content-Type':'application/json'},
+                    body: JSON.stringify({chapterId: studyCourse.id, topicId: studyTopic.id, topicTitle: studyTopic.title})
+                });
+                studyQuiz = await r.json();
+                studyAnswers = {};
+                renderQuiz();
+            } catch(e) {
+                document.getElementById('quizContent').innerHTML = `<div style="color:#ef4444">Error: ${e.message}</div>`;
+            } finally {
+                btn.disabled = false; btn.textContent = '↺ New Quiz';
+            }
+        }
+
+        function renderQuiz(scored=false) {
+            if (!studyQuiz.length) return;
+            const qs = studyQuiz.map((q,qi) => {
+                const opts = (q.options||[]).map((o,oi) => {
+                    let cls = 'quiz-opt';
+                    if (scored) {
+                        if (o === q.answer) cls += ' correct';
+                        else if (studyAnswers[qi] === o) cls += ' wrong';
+                    } else if (studyAnswers[qi] === o) cls += ' selected';
+                    return `<div class="${cls}" onclick="${scored?'':'studyPickOpt('+qi+',this)'}" data-opt="${escHtml(o)}">${o}</div>`;
+                }).join('');
+                const exp = scored ? `<div class="quiz-explanation show">${escHtml(q.explanation||'')}</div>` : '';
+                return `<div class="quiz-q">
+                    <div class="quiz-q-num">Q${qi+1} · ${q.type||'question'} · ${q.difficulty||''}</div>
+                    <div class="quiz-q-text">${escHtml(q.question||'')}</div>
+                    ${opts}${exp}
+                </div>`;
+            }).join('');
+            const answered = Object.keys(studyAnswers).length;
+            let scoreHtml = '';
+            if (scored) {
+                const correct = studyQuiz.filter((q,i) => studyAnswers[i] === q.answer).length;
+                const pct = Math.round(correct/studyQuiz.length*100);
+                scoreHtml = `<div class="quiz-score"><div class="quiz-score-num">${pct}%</div><div style="color:var(--text-secondary);font-size:14px">${correct}/${studyQuiz.length} correct</div></div>`;
+            }
+            document.getElementById('quizContent').innerHTML = `${scoreHtml}${qs}
+            <div class="quiz-submit-bar">
+                <button class="quiz-submit-btn" id="quizSubmitBtn" onclick="submitQuiz()" ${scored?'disabled':answered<studyQuiz.length?'disabled':''}>
+                    ${scored ? '✅ Quiz Complete — Regenerate Above' : `Submit (${answered}/${studyQuiz.length} answered)`}
+                </button>
+            </div>`;
+        }
+
+        function studyPickOpt(qi, el) {
+            const q = studyQuiz[qi];
+            studyAnswers[qi] = el.dataset.opt;
+            el.closest('.quiz-q').querySelectorAll('.quiz-opt').forEach(o => o.classList.remove('selected'));
+            el.classList.add('selected');
+            const answered = Object.keys(studyAnswers).length;
+            const btn = document.getElementById('quizSubmitBtn');
+            if (btn) { btn.disabled = answered < studyQuiz.length; btn.textContent = `Submit (${answered}/${studyQuiz.length} answered)`; }
+        }
+
+        function submitQuiz() { renderQuiz(true); }
+
+        async function loadCourseFlashcards(cid) {
+            showStudyContent({id: 'course', title: 'Course Flashcards'});
+            document.getElementById('studyPanelTitle').textContent = `${studyCourse.code} — All Topics`;
+            document.getElementById('studyActionsBar').innerHTML = '';
+            switchStudyTab('flashcards', document.querySelector('.content-tab:nth-child(2)'));
+            const btn = document.getElementById('genFCBtn');
+            btn.disabled = true; btn.textContent = '⏳ Generating 30 flashcards…';
+            document.getElementById('fcContent').innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:20px">Generating course flashcards<span class="loading-dots"></span></div>';
+            try {
+                const r = await fetch(`/api/ohs/chapters/${cid}/full-flashcards`, {method:'POST'});
+                studyFlashcards = await r.json();
+                studyFCIdx = 0;
+                renderFlashcard();
+            } catch(e) {
+                document.getElementById('fcContent').innerHTML = `<div style="color:#ef4444">Error: ${e.message}</div>`;
+            } finally {
+                btn.disabled = false; btn.textContent = '↺ Regenerate';
+            }
+        }
+
+        async function loadCourseQuiz(cid) {
+            showStudyContent({id: 'course', title: 'Course Exam'});
+            document.getElementById('studyPanelTitle').textContent = `${studyCourse.code} — Course Exam`;
+            document.getElementById('studyActionsBar').innerHTML = '';
+            switchStudyTab('quiz', document.querySelector('.content-tab:nth-child(3)'));
+            const btn = document.getElementById('genQuizBtn');
+            btn.disabled = true; btn.textContent = '⏳ Generating 20 questions…';
+            document.getElementById('quizContent').innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:20px">Generating course exam<span class="loading-dots"></span></div>';
+            try {
+                const r = await fetch(`/api/ohs/chapters/${cid}/full-quiz`, {method:'POST'});
+                studyQuiz = await r.json();
+                studyAnswers = {};
+                renderQuiz();
+            } catch(e) {
+                document.getElementById('quizContent').innerHTML = `<div style="color:#ef4444">Error: ${e.message}</div>`;
+            } finally {
+                btn.disabled = false; btn.textContent = '↺ Regenerate';
+            }
+        }
+
+        async function showProgramReview() {
+            studyScreen = 'content';
+            studyCourse = {id: 0, code: 'ALL', title: 'Full Program Review'};
+            studyTopic = {id: 0, title: 'Full Program Review'};
+            document.getElementById('studyPanelTitle').textContent = '🎓 Full Program Review';
+            document.getElementById('studyBackBtn').textContent = '← Courses';
+            document.getElementById('studyActionsBar').innerHTML = '';
+            const body = document.getElementById('studyBody');
+            body.innerHTML = `
+            <div class="content-tabs">
+                <button class="content-tab active" onclick="switchStudyTab('flashcards',this)">🃏 Flashcards (40)</button>
+                <button class="content-tab" onclick="switchStudyTab('quiz',this)">❓ Quiz (30)</button>
+            </div>
+            <div class="content-pane active" id="pane-flashcards">
+                <button class="generate-btn" id="genFCBtn" onclick="loadProgramFlashcards()">⚡ Generate Program Flashcards</button>
+                <div id="fcContent"></div>
+            </div>
+            <div class="content-pane" id="pane-quiz">
+                <button class="generate-btn" id="genQuizBtn" onclick="loadProgramQuiz()">⚡ Generate Program Exam</button>
+                <div id="quizContent"></div>
+            </div>`;
+        }
+
+        async function loadProgramFlashcards() {
+            const btn = document.getElementById('genFCBtn');
+            btn.disabled = true; btn.textContent = '⏳ Generating 40 flashcards…';
+            document.getElementById('fcContent').innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:20px">Generating program flashcards<span class="loading-dots"></span></div>';
+            try {
+                const r = await fetch('/api/ohs/program/flashcards', {method:'POST'});
+                studyFlashcards = await r.json();
+                studyFCIdx = 0;
+                renderFlashcard();
+            } catch(e) {
+                document.getElementById('fcContent').innerHTML = `<div style="color:#ef4444">Error: ${e.message}</div>`;
+            } finally {
+                btn.disabled = false; btn.textContent = '↺ Regenerate';
+            }
+        }
+
+        async function loadProgramQuiz() {
+            const btn = document.getElementById('genQuizBtn');
+            btn.disabled = true; btn.textContent = '⏳ Generating 30 questions…';
+            document.getElementById('quizContent').innerHTML = '<div style="color:var(--text-secondary);text-align:center;padding:20px">Generating program exam<span class="loading-dots"></span></div>';
+            try {
+                const r = await fetch('/api/ohs/program/quiz', {method:'POST'});
+                studyQuiz = await r.json();
+                studyAnswers = {};
+                renderQuiz();
+            } catch(e) {
+                document.getElementById('quizContent').innerHTML = `<div style="color:#ef4444">Error: ${e.message}</div>`;
+            } finally {
+                btn.disabled = false; btn.textContent = '↺ Regenerate';
+            }
+        }
+
+        // Sources management
+        async function showSourcesModal(cid) {
+            const el = document.getElementById('sourcesModal');
+            if (el.style.display !== 'none') { el.style.display = 'none'; return; }
+            el.style.display = 'block';
+            el.innerHTML = `<div class="sources-section"><div class="sources-title">📂 Course Materials</div><div id="sourceList">Loading<span class="loading-dots"></span></div>
+            <label class="source-upload-btn">
+                <span>📎 Upload PDF / DOCX / TXT</span>
+                <input type="file" style="display:none" multiple accept=".pdf,.docx,.txt,.csv,.md" onchange="uploadSources(${cid}, this)">
+            </label></div>`;
+            await refreshSources(cid);
+        }
+
+        async function refreshSources(cid) {
+            const r = await fetch(`/api/ohs/sources/${cid}`);
+            const sources = await r.json();
+            document.getElementById('sourceList').innerHTML = sources.length
+                ? sources.map(s => `<div class="source-row"><span style="font-size:14px">📄</span><span class="source-name">${s.name} <span style="color:rgba(255,255,255,.3)">${(s.textLength/1000).toFixed(1)}k chars</span></span><button class="source-del" onclick="delSource('${cid}','${s.id}')">🗑</button></div>`).join('')
+                : '<div style="color:var(--text-secondary);font-size:12px;padding:8px 0">No materials uploaded yet.</div>';
+        }
+
+        async function uploadSources(cid, input) {
+            const files = [...input.files];
+            for (const f of files) {
+                const fd = new FormData();
+                fd.append('file', f);
+                await fetch(`/api/ohs/sources/${cid}/upload`, {method:'POST', body: fd});
+            }
+            input.value = '';
+            await refreshSources(cid);
+        }
+
+        async function delSource(cid, sid) {
+            await fetch(`/api/ohs/sources/${cid}/${sid}`, {method:'DELETE'});
+            await refreshSources(cid);
+        }
+
+        // SSE reader for study streaming
+        async function readStudySSE(response, onChunk) {
+            const reader = response.body.getReader();
+            const dec = new TextDecoder();
+            let buf = '';
+            while (true) {
+                const {done, value} = await reader.read();
+                if (done) break;
+                buf += dec.decode(value, {stream:true});
+                const lines = buf.split('\n');
+                buf = lines.pop();
+                for (const line of lines) {
+                    if (!line.startsWith('data:')) continue;
+                    const raw = line.slice(5).trim();
+                    if (raw === '[DONE]') return;
+                    try { onChunk(JSON.parse(raw)); } catch {}
+                }
+            }
+        }
+
+        // Keyboard navigation for flashcards
+        document.addEventListener('keydown', e => {
+            if (!document.getElementById('studyPanel').classList.contains('show')) return;
+            if (studyScreen !== 'content' || !studyFlashcards.length) return;
+            if (e.key === 'ArrowRight') fcNav(1);
+            else if (e.key === 'ArrowLeft') fcNav(-1);
+            else if (e.key === ' ') { e.preventDefault(); document.getElementById('theCard')?.classList.toggle('flipped'); }
+        });
+
+        function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+        function calcHeatIndex(T_C, RH) {
+            // Rothfusz regression (NWS formula), T in °F
+            const T = T_C * 9 / 5 + 32;
+
+            // Simple formula for lower temperatures
+            const hiSimple = 0.5 * (T + 61.0 + (T - 68.0) * 1.2 + RH * 0.094);
+            if ((hiSimple + T) / 2 < 80) {
+                return (hiSimple - 32) * 5 / 9;
+            }
+
+            // Full Rothfusz regression
+            let hi = -42.379
+                + 2.04901523  * T
+                + 10.14333127 * RH
+                - 0.22475541  * T * RH
+                - 0.00683783  * T * T
+                - 0.05481717  * RH * RH
+                + 0.00122874  * T * T * RH
+                + 0.00085282  * T * RH * RH
+                - 0.00000199  * T * T * RH * RH;
+
+            // Low-humidity adjustment
+            if (RH < 13 && T >= 80 && T <= 112) {
+                hi -= ((13 - RH) / 4) * Math.sqrt((17 - Math.abs(T - 95)) / 17);
+            }
+            // High-humidity / lower-temp adjustment
+            if (RH > 85 && T >= 80 && T <= 87) {
+                hi += ((RH - 85) / 10) * ((87 - T) / 5);
+            }
+
+            return (hi - 32) * 5 / 9;  // return in °C
         }
     </script>
 </body>
