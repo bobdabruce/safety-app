@@ -908,6 +908,133 @@
         .loading-dots::after { content: ''; animation: dots 1.2s infinite; }
         @keyframes dots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
 
+        /* ── Glossary Panel ──────────────────────────────────────────────────── */
+        .glossary-overlay {
+            position: fixed; inset: 0; z-index: 3000;
+            background: #0A0B0E;
+            display: flex; flex-direction: column;
+            transform: translateX(100%);
+            transition: transform .25s ease;
+        }
+        .glossary-overlay.show { transform: translateX(0); }
+        .glossary-header {
+            display: flex; align-items: center; gap: 12px;
+            padding: 13px 18px;
+            background: #0D0E13;
+            border-bottom: 1px solid rgba(245,166,35,0.18);
+            flex-shrink: 0;
+        }
+        .glossary-title {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 10px; font-weight: 700; letter-spacing: 0.14em;
+            text-transform: uppercase; color: #F5A623; flex: 1;
+        }
+        .glossary-count {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; color: #6A6760;
+        }
+        .glossary-search-bar {
+            padding: 12px 18px;
+            background: #0D0E13;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+            display: flex; gap: 8px; align-items: center; flex-shrink: 0;
+        }
+        .glossary-search {
+            flex: 1;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 2px;
+            padding: 8px 12px;
+            color: #F0EDE8; font-size: 13px; font-family: inherit; outline: none;
+        }
+        .glossary-search:focus { border-color: rgba(245,166,35,0.4); }
+        .glossary-filter-btns { display: flex; gap: 5px; }
+        .gfilt-btn {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 9px; font-weight: 700; letter-spacing: 0.12em;
+            padding: 6px 10px; border-radius: 2px;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+            color: #6A6760; cursor: pointer; transition: .15s; text-transform: uppercase;
+        }
+        .gfilt-btn.active { background: rgba(245,166,35,0.12); border-color: rgba(245,166,35,0.35); color: #F5A623; }
+
+        .glossary-body { flex: 1; overflow-y: auto; padding: 16px 18px; }
+
+        /* Card flip mode */
+        .glossary-mode-bar {
+            display: flex; gap: 8px; margin-bottom: 16px; align-items: center;
+        }
+        .gmode-btn {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 9px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+            padding: 5px 12px; border-radius: 2px;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+            color: #6A6760; cursor: pointer; transition: .15s;
+        }
+        .gmode-btn.active { background: rgba(245,166,35,0.1); border-color: rgba(245,166,35,0.3); color: #F5A623; }
+        .glossary-progress {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px; color: #6A6760; margin-left: auto;
+        }
+
+        /* List mode */
+        .glist { display: flex; flex-direction: column; gap: 6px; }
+        .glist-item {
+            display: flex; gap: 12px; align-items: flex-start;
+            padding: 12px 14px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 2px;
+        }
+        .glist-term {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 13px; font-weight: 800; letter-spacing: 0.06em;
+            color: #F5A623; min-width: 110px; padding-top: 1px;
+        }
+        .glist-def { font-size: 13px; color: #D4D0CA; line-height: 1.55; flex: 1; }
+        .glist-tag {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 8px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+            padding: 2px 6px; border-radius: 1px; align-self: flex-start; margin-top: 2px; flex-shrink: 0;
+        }
+        .tag-acronym { background: rgba(232,64,64,0.1); color: #E84040; border: 1px solid rgba(232,64,64,0.25); }
+        .tag-term    { background: rgba(245,166,35,0.1); color: #F5A623; border: 1px solid rgba(245,166,35,0.25); }
+        .tag-law     { background: rgba(74,222,128,0.08); color: #4ade80; border: 1px solid rgba(74,222,128,0.2); }
+
+        /* Flashcard mode */
+        .gcard-wrap { perspective: 1000px; max-width: 500px; margin: 0 auto 16px; }
+        .gcard {
+            width: 100%; min-height: 220px; position: relative;
+            transform-style: preserve-3d; transition: transform .5s; cursor: pointer;
+        }
+        .gcard.flipped { transform: rotateY(180deg); }
+        .gcard-face {
+            position: absolute; inset: 0; backface-visibility: hidden;
+            border-radius: 2px; padding: 32px 28px;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; text-align: center; min-height: 220px;
+        }
+        .gcard-front { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); }
+        .gcard-back  { background: rgba(245,166,35,0.06); border: 1px solid rgba(245,166,35,0.2); transform: rotateY(180deg); }
+        .gcard-hint  { font-family: 'Barlow Condensed', system-ui, sans-serif; font-size: 9px; letter-spacing: 0.14em; color: #6A6760; margin-bottom: 14px; text-transform: uppercase; }
+        .gcard-term  { font-family: 'Barlow Condensed', system-ui, sans-serif; font-size: 2rem; font-weight: 800; letter-spacing: 0.08em; color: #F5A623; line-height: 1.1; }
+        .gcard-def   { font-size: 14px; color: #D4D0CA; line-height: 1.65; }
+        .gcard-nav   { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 8px; }
+        .gcard-nav-btn {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            color: #F0EDE8; padding: 8px 18px; border-radius: 2px;
+            font-size: 12px; font-weight: 700; letter-spacing: 0.08em; cursor: pointer; transition: .15s;
+        }
+        .gcard-nav-btn:hover { border-color: rgba(245,166,35,0.4); color: #F5A623; }
+        .gcard-shuffle {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            background: none; border: none; color: #6A6760;
+            font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase;
+            cursor: pointer; padding: 4px 8px; transition: color .15s;
+        }
+        .gcard-shuffle:hover { color: #F5A623; }
+
         /* ── Floating Chat Widget ────────────────────────────────────────────── */
         .fchat-btn {
             position: fixed;
@@ -1317,6 +1444,25 @@
         </div>
     </div>
 
+    <!-- OHS Glossary Panel -->
+    <div class="glossary-overlay" id="glossaryPanel">
+        <div class="glossary-header">
+            <div class="glossary-title">OHS Glossary — Acronyms &amp; Definitions</div>
+            <span class="glossary-count" id="glossaryCount"></span>
+            <button class="study-back" onclick="closeGlossary()">✕</button>
+        </div>
+        <div class="glossary-search-bar">
+            <input class="glossary-search" id="glossarySearch" type="text" placeholder="Search terms, acronyms, definitions..." oninput="filterGlossary()">
+            <div class="glossary-filter-btns">
+                <button class="gfilt-btn active" onclick="setGFilter('all',this)">All</button>
+                <button class="gfilt-btn" onclick="setGFilter('acronym',this)">Acronyms</button>
+                <button class="gfilt-btn" onclick="setGFilter('term',this)">Terms</button>
+                <button class="gfilt-btn" onclick="setGFilter('law',this)">Law</button>
+            </div>
+        </div>
+        <div class="glossary-body" id="glossaryBody"></div>
+    </div>
+
     <!-- OHS Tools Panel -->
     <div class="ohs-overlay" id="ohsPanel">
         <div class="ohs-header">
@@ -1612,6 +1758,7 @@
             <button class="quick-btn" onclick="quickAction('What do you remember about me?')">🧠 Memory</button>
             <button class="quick-btn" onclick="quickAction('Card research mode')">🃏 Cards</button>
             <button class="quick-btn" onclick="quickAction('AI learning menu')">🤖 AI</button>
+            <button class="quick-btn" onclick="openGlossary()">📖 Glossary</button>
             <button class="quick-btn" onclick="toggleOHSPanel()">🦺 OHS Tools</button>
             <button class="quick-btn" onclick="toggleCalculator()">🧮 Calc</button>
             <button class="quick-btn" onclick="toggleNotepad()">📝 Notes</button>
@@ -2116,6 +2263,188 @@
         const savedFont = localStorage.getItem('hazardiq_font');
         if (savedFont && FONTS[savedFont]) {
             setFont(savedFont, document.querySelector(`.font-opt[data-font="${savedFont}"]`) || {classList:{add:()=>{},remove:()=>{}}});
+        }
+
+        // ─── OHS Glossary ─────────────────────────────────────────────────────
+        const GLOSSARY = [
+            // ACRONYMS
+            {term:'PPE',       def:'Personal Protective Equipment — clothing and devices worn to minimize exposure to hazards (hard hats, gloves, respirators, safety glasses, hi-vis vests).',                                                               type:'acronym'},
+            {term:'WHMIS',     def:'Workplace Hazardous Materials Information System — Canada\'s national standard for communicating hazard information about controlled products in the workplace.',                                                           type:'acronym'},
+            {term:'SDS',       def:'Safety Data Sheet — a document providing detailed hazard information about a chemical or controlled product, replacing MSDS under WHMIS 2015/GHS alignment.',                                                              type:'acronym'},
+            {term:'MSDS',      def:'Material Safety Data Sheet — the predecessor to SDS under the old WHMIS 1988 system. Still referenced on legacy products.',                                                                                               type:'acronym'},
+            {term:'GHS',       def:'Globally Harmonized System of Classification and Labelling of Chemicals — the international standard that WHMIS 2015 aligns with. Standardizes hazard symbols, signal words, and SDS format worldwide.',                  type:'acronym'},
+            {term:'IRS',       def:'Internal Responsibility System — the foundational principle of Canadian OHS law: everyone in the workplace (workers, supervisors, employers) shares responsibility for health and safety.',                                 type:'acronym'},
+            {term:'JHSC',      def:'Joint Health and Safety Committee — a workplace committee of worker and management representatives that identifies hazards, makes recommendations, and promotes a safe workplace. Required in most Canadian jurisdictions at 20+ workers.',type:'acronym'},
+            {term:'OHS',       def:'Occupational Health and Safety — the field and legislation concerned with identifying, assessing, and controlling workplace hazards to protect worker health and safety.',                                                   type:'acronym'},
+            {term:'OHSA',      def:'Occupational Health and Safety Act — the primary legislation governing workplace safety in many Canadian provinces (e.g., Ontario\'s OHSA). Sets out rights, duties, and enforcement mechanisms.',                         type:'acronym'},
+            {term:'WCB',       def:'Workers\' Compensation Board — provincial body that administers no-fault workers\' compensation insurance for workplace injuries and illnesses. Known as WorkSafeBC in British Columbia.',                                  type:'acronym'},
+            {term:'WSIB',      def:'Workplace Safety and Insurance Board — Ontario\'s workers\' compensation body. Administers insurance, return-to-work programs, and prevention initiatives.',                                                               type:'acronym'},
+            {term:'JSA',       def:'Job Safety Analysis — a systematic process of identifying hazards associated with each step of a job and implementing controls before work begins. Also called JHA.',                                                       type:'acronym'},
+            {term:'JHA',       def:'Job Hazard Analysis — identical to JSA. Breaks a job into steps, identifies hazards at each step, and prescribes controls.',                                                                                              type:'acronym'},
+            {term:'LOTO',      def:'Lockout/Tagout — an energy control procedure that ensures hazardous energy sources (electrical, pneumatic, hydraulic, gravity) are isolated and cannot be re-energized while workers perform maintenance or service.',      type:'acronym'},
+            {term:'RACE',      def:'Rescue, Alarm, Confine, Extinguish/Evacuate — the fire emergency response sequence. Rescue people in immediate danger, activate the alarm, confine the fire by closing doors, then extinguish or evacuate.',               type:'acronym'},
+            {term:'PASS',      def:'Pull, Aim, Squeeze, Sweep — the correct technique for operating a portable fire extinguisher. Pull the pin, aim at the base of the fire, squeeze the handle, sweep side to side.',                                        type:'acronym'},
+            {term:'TWA',       def:'Time-Weighted Average — the average concentration of a chemical in air over an 8-hour workday, used to assess chronic exposure risk against occupational exposure limits (OEL).',                                           type:'acronym'},
+            {term:'OEL',       def:'Occupational Exposure Limit — the maximum airborne concentration of a chemical that most workers can be exposed to repeatedly without adverse health effects. Includes TWA, STEL, and ceiling values.',                     type:'acronym'},
+            {term:'TLV',       def:'Threshold Limit Value — ACGIH guidelines for airborne chemical concentrations. Widely referenced but not legally binding unless adopted by a jurisdiction.',                                                                type:'acronym'},
+            {term:'STEL',      def:'Short-Term Exposure Limit — the maximum concentration a worker can be exposed to for a short period (typically 15 minutes), no more than 4 times per shift, with 60-minute recovery periods.',                             type:'acronym'},
+            {term:'PEL',       def:'Permissible Exposure Limit — OSHA-mandated limits for airborne concentrations of hazardous substances in U.S. workplaces.',                                                                                               type:'acronym'},
+            {term:'LEL',       def:'Lower Explosive Limit — the minimum concentration of a flammable gas or vapour in air that will ignite. Below the LEL, the mixture is too lean to burn.',                                                                  type:'acronym'},
+            {term:'UEL',       def:'Upper Explosive Limit — the maximum concentration of a flammable gas or vapour in air that will ignite. Above the UEL, the mixture is too rich to burn.',                                                                  type:'acronym'},
+            {term:'IDLH',      def:'Immediately Dangerous to Life or Health — the maximum concentration of a contaminant from which a worker could escape within 30 minutes without suffering irreversible health effects or escape-impairing symptoms.',        type:'acronym'},
+            {term:'WBGT',      def:'Wet Bulb Globe Temperature — a heat stress index that accounts for temperature, humidity, radiant heat, and air movement. Used to set work/rest schedules in hot environments.',                                           type:'acronym'},
+            {term:'MSD',       def:'Musculoskeletal Disorder — injuries and disorders affecting muscles, tendons, ligaments, nerves, and joints, often caused by ergonomic hazards like repetitive motion, awkward postures, and forceful exertions.',          type:'acronym'},
+            {term:'RSI',       def:'Repetitive Strain Injury — a type of MSD caused by repeated movements, often affecting wrists, forearms, shoulders, and neck. Common in assembly, keyboard work, and construction.',                                       type:'acronym'},
+            {term:'SCBA',      def:'Self-Contained Breathing Apparatus — a supplied-air respirator that provides a clean air supply from a cylinder. Required in IDLH atmospheres, oxygen-deficient environments, or for firefighting.',                      type:'acronym'},
+            {term:'PAPR',      def:'Powered Air-Purifying Respirator — a battery-powered respirator that draws air through filters, providing a continuous flow to the user. Offers higher protection factor than standard air-purifying respirators.',         type:'acronym'},
+            {term:'APF',       def:'Assigned Protection Factor — the level of respiratory protection a properly functioning respirator provides to a trained, properly fitted user in typical workplace conditions.',                                            type:'acronym'},
+            {term:'SWL',       def:'Safe Working Load — the maximum load a lifting device, sling, or rigging component is rated to handle safely under normal conditions.',                                                                                    type:'acronym'},
+            {term:'WLL',       def:'Working Load Limit — same as SWL. The maximum load specified by the manufacturer that a component is designed to support in general service.',                                                                              type:'acronym'},
+            {term:'SMS',       def:'Safety Management System — a systematic, comprehensive approach to managing safety risks. Includes policies, goals, accountability, hazard identification, risk controls, training, and performance monitoring.',           type:'acronym'},
+            {term:'PDCA',      def:'Plan, Do, Check, Act — the continuous improvement cycle used in safety management systems (ISO 45001). Plan the system, implement it, measure performance, and act to improve.',                                           type:'acronym'},
+            {term:'CAPA',      def:'Corrective Action / Preventive Action — a process to identify root causes of incidents or non-conformances and implement fixes to prevent recurrence.',                                                                    type:'acronym'},
+            {term:'KPI',       def:'Key Performance Indicator — measurable values that demonstrate how effectively OHS objectives are being met. Includes both lagging (LTI, TRIR) and leading (training completion, inspections) indicators.',                type:'acronym'},
+            {term:'LTI',       def:'Lost Time Injury — a work-related injury or illness that results in the worker being absent from work for at least one full shift after the day of injury.',                                                                type:'acronym'},
+            {term:'TRIR',      def:'Total Recordable Incident Rate — a measure of the frequency of recordable workplace injuries per 200,000 hours worked. Formula: (Number of incidents × 200,000) ÷ Total hours worked.',                                   type:'acronym'},
+            {term:'ALARA',     def:'As Low As Reasonably Achievable — a radiation and chemical exposure principle requiring that exposures be reduced as far below the OEL as reasonably practicable, not merely kept below the limit.',                        type:'acronym'},
+            {term:'HAZMAT',    def:'Hazardous Materials — substances that pose a risk to health, safety, property, or the environment during storage, handling, or transport.',                                                                                type:'acronym'},
+            {term:'COR',       def:'Certificate of Recognition — a Canadian workplace certification indicating an employer has a functioning safety management system that meets an established standard, often required for contractor pre-qualification.',     type:'acronym'},
+            {term:'NIOSH',     def:'National Institute for Occupational Safety and Health — the U.S. federal agency responsible for conducting research and making recommendations to prevent work-related injury and illness.',                                 type:'acronym'},
+            {term:'ACGIH',     def:'American Conference of Governmental Industrial Hygienists — organization that publishes TLVs and BEIs, widely referenced in Canadian OHS practice.',                                                                       type:'acronym'},
+            {term:'MOL',       def:'Ministry of Labour — provincial ministry responsible for enforcing OHS legislation in Ontario. Inspectors (OHS officers) have authority to inspect workplaces, issue orders, and lay charges.',                            type:'acronym'},
+            {term:'ATP',       def:'Authority to Proceed — a formal written authorization confirming all required safety precautions, permits, and approvals are in place before high-risk work begins.',                                                       type:'acronym'},
+            {term:'ISO 45001', def:'International standard for occupational health and safety management systems. Replaces OHSAS 18001. Uses PDCA cycle and requires integration with organizational strategy.',                                                type:'acronym'},
+            {term:'OHSAS 18001',def:'The predecessor to ISO 45001. An international specification for OHS management systems. Formally withdrawn and replaced by ISO 45001 in 2021.',                                                                          type:'acronym'},
+            // TERMS
+            {term:'Hazard',       def:'Any source, situation, or act with potential to cause harm — whether injury, illness, property damage, or environmental harm. Hazards exist before harm occurs.',                                                       type:'term'},
+            {term:'Risk',         def:'The combination of the likelihood that a hazard will cause harm and the severity of that harm. Risk = Probability × Consequence.',                                                                                      type:'term'},
+            {term:'Near Miss',    def:'An unplanned event that did not result in injury, illness, or damage but had the potential to do so. Near misses are critical leading indicators — each one is a warning.',                                              type:'term'},
+            {term:'Incident',     def:'Any unplanned event that results in, or has the potential to result in, injury, illness, property damage, or environmental harm. Includes accidents and near misses.',                                                   type:'term'},
+            {term:'Due Diligence',def:'Taking every precaution reasonable in the circumstances to prevent injuries or accidents. The legal standard used to determine employer and supervisor liability in OHS prosecutions.',                                   type:'term'},
+            {term:'Right to Know',def:'A worker\'s fundamental OHS right to receive information about hazardous substances in the workplace, including WHMIS labelling and SDS training.',                                                                     type:'law'},
+            {term:'Right to Participate',def:'A worker\'s right to be involved in OHS activities — including JHSC participation, workplace inspections, incident investigations, and safety program development.',                                              type:'law'},
+            {term:'Right to Refuse',def:'A worker\'s right to refuse work they believe is likely to endanger themselves or another worker. Protected by law in all Canadian jurisdictions. Employer cannot discipline a worker exercising this right in good faith.',type:'law'},
+            {term:'Hierarchy of Controls',def:'A prioritized framework for selecting controls: 1) Elimination 2) Substitution 3) Engineering Controls 4) Administrative Controls 5) PPE. Higher-level controls are more effective and reliable.',              type:'term'},
+            {term:'Elimination',  def:'The highest-level control — physically removing the hazard entirely from the workplace. The most effective control but not always feasible.',                                                                            type:'term'},
+            {term:'Substitution', def:'Replacing a hazardous material, process, or equipment with a less hazardous one. More feasible than elimination but still highly effective.',                                                                            type:'term'},
+            {term:'Engineering Controls',def:'Physical modifications to the workplace, process, or equipment that reduce or isolate hazard exposure (e.g., machine guards, ventilation systems, noise enclosures).',                                           type:'term'},
+            {term:'Administrative Controls',def:'Changes to work procedures, schedules, or practices to reduce exposure (e.g., job rotation, training, work permits, safe work procedures). Rely on human behaviour.',                                         type:'term'},
+            {term:'Ergonomics',   def:'The science of designing jobs, equipment, and workplaces to fit the physical and cognitive capabilities of workers, reducing MSD risk and improving productivity.',                                                       type:'term'},
+            {term:'Industrial Hygiene',def:'The science and art of anticipating, recognizing, evaluating, and controlling workplace conditions that may cause worker injury or illness. Focuses on chemical, physical, biological, and ergonomic hazards.',      type:'term'},
+            {term:'Toolbox Talk', def:'A short, informal safety meeting held at the worksite — typically 5–15 minutes — to discuss a specific hazard, procedure, or safety topic relevant to the day\'s work.',                                                type:'term'},
+            {term:'Safe Work Procedure',def:'A written, step-by-step description of how to perform a task safely. Identifies hazards at each step and the controls required. Also called Standard Operating Procedure (SOP).',                                 type:'term'},
+            {term:'Work Permit',  def:'A formal written authorization required before high-risk work begins (hot work, confined space entry, LOTO, work at height). Documents hazard assessment, controls, and approvals.',                                     type:'term'},
+            {term:'Confined Space',def:'A space large enough for a worker to enter and perform work, with limited means of entry or exit, and not designed for continuous occupancy. May contain atmospheric, engulfment, or entrapment hazards.',               type:'term'},
+            {term:'Hot Work',     def:'Any work that produces heat, sparks, or open flame — including welding, cutting, grinding, and brazing. Requires a hot work permit and fire watch in many workplaces.',                                                  type:'term'},
+            {term:'Root Cause',   def:'The fundamental, underlying reason an incident occurred. Addressing root causes prevents recurrence. Root cause analysis goes beyond immediate causes to systemic and organizational factors.',                            type:'term'},
+            {term:'Lagging Indicator',def:'A reactive safety metric that measures past incidents (e.g., LTI rate, TRIR). Tells you what has already happened. Useful but not sufficient for proactive safety management.',                                     type:'term'},
+            {term:'Leading Indicator',def:'A proactive safety metric that predicts future performance by measuring safety activities and conditions (e.g., inspection completion rate, near miss reporting rate, training hours).',                              type:'term'},
+            {term:'Competent Person',def:'Under Canadian OHS law, someone qualified by knowledge, training, and experience to organize and perform a job safely; familiar with the applicable legislation; has knowledge of any potential or actual hazards.',   type:'law'},
+            {term:'Qualified Person',def:'A person who, by possession of a recognized degree, certificate, or professional standing, has demonstrated the ability to solve or resolve problems related to a specific task or subject.',                          type:'law'},
+            {term:'General Duty Clause',def:'A provision in OHS legislation requiring employers to take every precaution reasonable in the circumstances to protect worker health and safety, even in situations not covered by specific regulations.',           type:'law'},
+            {term:'Imminent Danger',def:'A condition or practice that could reasonably be expected to cause death or serious physical harm immediately or before the hazard can be eliminated through normal enforcement procedures.',                            type:'law'},
+            {term:'Controlled Product',def:'Under WHMIS, any product, material, or substance included in one of the hazard classes. Requires a supplier label and SDS.',                                                                                      type:'term'},
+            {term:'Flashpoint',   def:'The lowest temperature at which a liquid produces enough vapour to ignite in air. Used to classify flammable and combustible liquids. Lower flashpoint = higher fire hazard.',                                           type:'term'},
+            {term:'Permissible Noise',def:'In most Canadian jurisdictions, the occupational noise exposure limit is 85 dB(A) TWA over 8 hours. Exposure above this requires engineering controls, administrative controls, and/or hearing protection.',         type:'term'},
+            {term:'Fit Test',     def:'A protocol to verify that a specific respirator achieves an adequate face seal on a specific worker. Qualitative (smell/taste) or quantitative (measurement). Required before using a tight-fitting respirator.',        type:'term'},
+            {term:'Buddy System', def:'A safety procedure in which workers are paired together to monitor each other for signs of hazardous exposure, heat stress, or other emergencies — especially used in confined space, chemical, and remote work.',        type:'term'},
+        ];
+
+        let gCurrentFilter = 'all';
+        let gMode = 'list';
+        let gFiltered = [...GLOSSARY];
+        let gCardIndex = 0;
+        let gCardFlipped = false;
+
+        function openGlossary() {
+            document.getElementById('glossaryPanel').classList.add('show');
+            renderGlossary();
+        }
+        function closeGlossary() {
+            document.getElementById('glossaryPanel').classList.remove('show');
+        }
+
+        function setGFilter(type, btn) {
+            gCurrentFilter = type;
+            document.querySelectorAll('.gfilt-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filterGlossary();
+        }
+
+        function filterGlossary() {
+            const q = (document.getElementById('glossarySearch').value || '').toLowerCase();
+            gFiltered = GLOSSARY.filter(c => {
+                const matchType = gCurrentFilter === 'all' || c.type === gCurrentFilter;
+                const matchQ = !q || c.term.toLowerCase().includes(q) || c.def.toLowerCase().includes(q);
+                return matchType && matchQ;
+            });
+            gCardIndex = 0;
+            gCardFlipped = false;
+            renderGlossary();
+        }
+
+        function setGMode(mode) {
+            gMode = mode;
+            renderGlossary();
+        }
+
+        function renderGlossary() {
+            const body = document.getElementById('glossaryBody');
+            document.getElementById('glossaryCount').textContent = `${gFiltered.length} entries`;
+
+            const modeBar = `
+                <div class="glossary-mode-bar">
+                    <button class="gmode-btn ${gMode==='list'?'active':''}" onclick="setGMode('list')">List</button>
+                    <button class="gmode-btn ${gMode==='cards'?'active':''}" onclick="setGMode('cards')">Flashcards</button>
+                    <span class="glossary-progress">${gFiltered.length} results</span>
+                </div>`;
+
+            if (gMode === 'list') {
+                const items = gFiltered.map(c => `
+                    <div class="glist-item">
+                        <div class="glist-term">${escHtml(c.term)}</div>
+                        <div class="glist-def">${escHtml(c.def)}</div>
+                        <span class="glist-tag tag-${c.type}">${c.type}</span>
+                    </div>`).join('');
+                body.innerHTML = modeBar + `<div class="glist">${items || '<div style="color:#6A6760;padding:20px 0">No results.</div>'}</div>`;
+            } else {
+                if (!gFiltered.length) { body.innerHTML = modeBar + '<div style="color:#6A6760;padding:20px 0">No results.</div>'; return; }
+                const card = gFiltered[gCardIndex];
+                body.innerHTML = modeBar + `
+                    <div class="gcard-wrap">
+                        <div class="gcard ${gCardFlipped?'flipped':''}" id="gcardEl" onclick="flipGCard()">
+                            <div class="gcard-face gcard-front">
+                                <div class="gcard-hint">Tap to reveal definition</div>
+                                <div class="gcard-term">${escHtml(card.term)}</div>
+                                <span class="glist-tag tag-${card.type}" style="margin-top:14px">${card.type}</span>
+                            </div>
+                            <div class="gcard-face gcard-back">
+                                <div class="gcard-hint">Definition</div>
+                                <div class="gcard-def">${escHtml(card.def)}</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="gcard-nav">
+                        <button class="gcard-nav-btn" onclick="stepGCard(-1)">← Prev</button>
+                        <span class="glossary-progress">${gCardIndex+1} / ${gFiltered.length}</span>
+                        <button class="gcard-nav-btn" onclick="stepGCard(1)">Next →</button>
+                    </div>
+                    <div style="text-align:center;margin-top:8px">
+                        <button class="gcard-shuffle" onclick="shuffleGCards()">⇄ Shuffle</button>
+                    </div>`;
+            }
+        }
+
+        function flipGCard() { gCardFlipped = !gCardFlipped; renderGlossary(); }
+        function stepGCard(dir) {
+            gCardFlipped = false;
+            gCardIndex = (gCardIndex + dir + gFiltered.length) % gFiltered.length;
+            renderGlossary();
+        }
+        function shuffleGCards() {
+            gFiltered = gFiltered.sort(() => Math.random() - 0.5);
+            gCardIndex = 0; gCardFlipped = false;
+            renderGlossary();
         }
 
         // ─── Floating Chat Widget ─────────────────────────────────────────────
