@@ -10,7 +10,7 @@
     <link rel="manifest" href="/static/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -907,6 +907,166 @@
         .quiz-score-num { font-size: 3rem; font-weight: 900; font-family: 'Courier New', monospace; color: #F5A623; }
         .loading-dots::after { content: ''; animation: dots 1.2s infinite; }
         @keyframes dots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
+
+        /* ── Font Picker ─────────────────────────────────────────────────── */
+        .font-picker { position: relative; }
+        .font-picker-btn {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 3px;
+            color: #8A8780;
+            font-size: 13px;
+            font-weight: 700;
+            padding: 5px 10px;
+            cursor: pointer;
+            transition: .15s;
+        }
+        .font-picker-btn:hover { color: #F5A623; border-color: rgba(245,166,35,0.3); }
+        .font-menu {
+            display: none;
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: #0D0E13;
+            border: 1px solid rgba(245,166,35,0.2);
+            border-radius: 3px;
+            min-width: 180px;
+            z-index: 9999;
+            padding: 6px;
+        }
+        .font-menu.open { display: block; }
+        .font-menu-label {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            color: #6A6760;
+            padding: 4px 8px 8px;
+        }
+        .font-opt {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background: none;
+            border: none;
+            border-radius: 2px;
+            padding: 8px 10px;
+            color: #D4D0CA;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            text-align: left;
+            transition: .1s;
+        }
+        .font-opt:hover, .font-opt.active { background: rgba(245,166,35,0.08); color: #F5A623; }
+        .font-opt span { font-size: 10px; color: #6A6760; font-weight: 400; }
+        .font-opt[data-font="ibm"] { font-family: 'IBM Plex Sans', sans-serif; }
+        .font-opt[data-font="dm"] { font-family: 'DM Sans', sans-serif; }
+        .font-opt[data-font="mono"] { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+        .font-opt[data-font="system"] { font-family: system-ui, sans-serif; }
+        .font-opt[data-font="barlow"] { font-family: 'Barlow', sans-serif; }
+
+        /* ── Risk Matrix ─────────────────────────────────────────────────── */
+        .rm-config { margin-bottom: 20px; }
+        .rm-config-row { display: flex; gap: 16px; flex-wrap: wrap; }
+        .rm-config-group { flex: 1; min-width: 140px; }
+        .rm-config-group label {
+            display: block;
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
+            color: #6A6760; margin-bottom: 6px;
+        }
+        .rm-size-btns { display: flex; gap: 6px; }
+        .rm-size-btn {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            padding: 6px 14px; border-radius: 2px;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+            color: #8A8780; font-size: 12px; font-weight: 700; cursor: pointer; transition: .15s;
+        }
+        .rm-size-btn.active { background: rgba(245,166,35,0.12); border-color: rgba(245,166,35,0.4); color: #F5A623; }
+        .rm-select {
+            width: 100%; background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 2px;
+            padding: 7px 10px; color: #D4D0CA; font-size: 13px;
+            font-family: 'Barlow', sans-serif; outline: none;
+        }
+        .rm-wrap { overflow-x: auto; margin: 16px 0; }
+        .rm-grid-container { display: flex; align-items: flex-start; gap: 8px; }
+        .rm-y-label {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
+            color: #6A6760; writing-mode: vertical-rl;
+            transform: rotate(180deg); text-align: center; padding: 8px 0;
+        }
+        .rm-x-label-row { display: flex; margin-bottom: 4px; }
+        .rm-x-label {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 9px; font-weight: 700; letter-spacing: 0.1em;
+            color: #6A6760; text-align: center; text-transform: uppercase;
+        }
+        .rm-x-label-bottom {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 9px; font-weight: 700; letter-spacing: 0.14em;
+            color: #6A6760; text-align: center; margin-top: 6px;
+        }
+        .rm-grid { display: grid; gap: 3px; }
+        .rm-cell {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 1px solid rgba(255,255,255,0.06);
+            cursor: pointer; transition: .15s; border-radius: 2px;
+            min-width: 54px; min-height: 54px; padding: 4px;
+        }
+        .rm-cell:hover { transform: scale(1.06); z-index: 2; position: relative; border-color: rgba(255,255,255,0.3); }
+        .rm-cell.selected { border: 2px solid #fff !important; transform: scale(1.08); z-index: 3; position: relative; }
+        .rm-cell-score {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 16px; font-weight: 700; line-height: 1;
+        }
+        .rm-cell-label {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 8px; letter-spacing: 0.1em; margin-top: 2px; opacity: 0.7; text-transform: uppercase;
+        }
+        .rm-low    { background: rgba(74,222,128,0.12);  color: #4ade80; }
+        .rm-medium { background: rgba(245,166,35,0.15);  color: #F5A623; }
+        .rm-high   { background: rgba(232,64,64,0.15);   color: #E84040; }
+        .rm-critical { background: rgba(180,20,20,0.25); color: #ff6b6b; }
+        .rm-result {
+            display: none; margin: 16px 0;
+            border-left: 2px solid #F5A623;
+            padding: 16px 20px; background: rgba(245,166,35,0.04);
+        }
+        .rm-result.show { display: block; }
+        .rm-result-score {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 3rem; font-weight: 700; line-height: 1;
+        }
+        .rm-result-label {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 10px; letter-spacing: 0.16em; font-weight: 700;
+            text-transform: uppercase; margin: 6px 0 10px;
+        }
+        .rm-result-action { font-size: 13px; color: #D4D0CA; line-height: 1.6; }
+        .rm-legend { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
+        .rm-legend-item {
+            display: flex; align-items: center; gap: 8px;
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 11px; letter-spacing: 0.06em; color: #8A8780;
+        }
+        .rm-swatch { width: 12px; height: 12px; border-radius: 1px; flex-shrink: 0; }
+        .rm-custom-labels { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .rm-custom-labels input {
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 2px; padding: 7px 10px; color: #D4D0CA;
+            font-size: 12px; font-family: 'Barlow', sans-serif; outline: none; width: 100%;
+        }
+        .rm-custom-labels input:focus { border-color: rgba(245,166,35,0.4); }
+        .rm-custom-labels .rm-cl-label {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 9px; font-weight: 700; letter-spacing: 0.12em;
+            color: #6A6760; margin-bottom: 3px;
+        }
     </style>
 </head>
 <body>
@@ -964,11 +1124,12 @@
             <button class="ohs-close" onclick="toggleOHSPanel()">✕</button>
         </div>
         <div class="ohs-tabs">
-            <button class="ohs-tab active" onclick="switchOHSTab('twl', this)">🌡️ TWL</button>
-            <button class="ohs-tab" onclick="switchOHSTab('wbgt', this)">🌐 WBGT</button>
-            <button class="ohs-tab" onclick="switchOHSTab('humidex', this)">💧 Humidex</button>
-            <button class="ohs-tab" onclick="switchOHSTab('heatindex', this)">🔥 Heat Index</button>
-            <button class="ohs-tab" onclick="switchOHSTab('ppcc', this)">⚖️ Push/Pull/Carry</button>
+            <button class="ohs-tab active" onclick="switchOHSTab('twl', this)">TWL</button>
+            <button class="ohs-tab" onclick="switchOHSTab('wbgt', this)">WBGT</button>
+            <button class="ohs-tab" onclick="switchOHSTab('humidex', this)">HUMIDEX</button>
+            <button class="ohs-tab" onclick="switchOHSTab('heatindex', this)">HEAT INDEX</button>
+            <button class="ohs-tab" onclick="switchOHSTab('ppcc', this)">PUSH/PULL/CARRY</button>
+            <button class="ohs-tab" onclick="switchOHSTab('riskmatrix', this)">RISK MATRIX</button>
         </div>
         <div class="ohs-body">
 
@@ -1121,6 +1282,65 @@
                 <p class="ohs-ref" style="margin-top:8px;">WorkSafeBC Push/Pull/Carry Calculator © 2020 WorkSafeBC &nbsp;|&nbsp; <a href="http://worksafebcmedia.com/misc/calculator/ppcc/" target="_blank" style="color:#60a5fa">Open full screen ↗</a></p>
             </div>
 
+            <!-- Risk Matrix -->
+            <div class="ohs-calc" id="ohs-riskmatrix">
+                <h3>Risk Matrix Calculator</h3>
+                <p class="calc-desc">Select likelihood and consequence to calculate risk rating. Customize labels for your specific workplace context.</p>
+
+                <div class="rm-config">
+                    <div class="rm-config-row">
+                        <div class="rm-config-group">
+                            <label>MATRIX SIZE</label>
+                            <div class="rm-size-btns">
+                                <button class="rm-size-btn active" onclick="setMatrixSize(3,this)">3×3</button>
+                                <button class="rm-size-btn" onclick="setMatrixSize(4,this)">4×4</button>
+                                <button class="rm-size-btn" onclick="setMatrixSize(5,this)">5×5</button>
+                            </div>
+                        </div>
+                        <div class="rm-config-group">
+                            <label>CONTEXT</label>
+                            <select class="rm-select" onchange="loadRMContext(this.value)">
+                                <option value="generic">Generic</option>
+                                <option value="construction">Construction</option>
+                                <option value="chemical">Chemical / Industrial</option>
+                                <option value="office">Office / Admin</option>
+                                <option value="healthcare">Healthcare</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rm-labels-row">
+                    <div class="rm-axis-label">LIKELIHOOD →</div>
+                    <div class="rm-axis-label">CONSEQUENCE →</div>
+                </div>
+
+                <div class="rm-wrap">
+                    <div class="rm-grid-container">
+                        <div class="rm-y-label">CONSEQUENCE</div>
+                        <div>
+                            <div class="rm-x-label-row" id="rmXLabels"></div>
+                            <div class="rm-grid" id="rmGrid"></div>
+                        </div>
+                    </div>
+                    <div class="rm-x-label-bottom">LIKELIHOOD</div>
+                </div>
+
+                <div class="rm-result" id="rmResult"></div>
+
+                <div class="rm-legend">
+                    <div class="rm-legend-item"><span class="rm-swatch rm-low"></span>LOW — Monitor, routine procedures</div>
+                    <div class="rm-legend-item"><span class="rm-swatch rm-medium"></span>MEDIUM — Controls required, supervisor review</div>
+                    <div class="rm-legend-item"><span class="rm-swatch rm-high"></span>HIGH — Immediate action, management approval</div>
+                    <div class="rm-legend-item"><span class="rm-swatch rm-critical"></span>CRITICAL — Stop work, eliminate hazard</div>
+                </div>
+
+                <hr class="ohs-divider">
+                <h3 style="margin-bottom:10px;">Custom Labels</h3>
+                <div class="rm-custom-labels" id="rmCustomLabels"></div>
+                <button class="ohs-calc-btn" style="margin-top:12px;" onclick="applyCustomLabels()">Apply Labels</button>
+            </div>
+
         </div><!-- ohs-body -->
     </div><!-- ohs-overlay -->
 
@@ -1139,9 +1359,22 @@
 
     <div class="header">
         <h1><span class="brand-hazard">HAZARD</span><span class="brand-iq">IQ</span></h1>
-        <div class="status">
-            <div class="status-dot" id="statusDot"></div>
-            <span id="statusText">Online</span>
+        <div style="display:flex;align-items:center;gap:12px;">
+            <div class="font-picker" id="fontPicker">
+                <button class="font-picker-btn" onclick="toggleFontMenu()" title="Font">Aa</button>
+                <div class="font-menu" id="fontMenu">
+                    <div class="font-menu-label">TYPEFACE</div>
+                    <button class="font-opt" data-font="barlow" onclick="setFont('barlow',this)">Barlow <span>Industrial</span></button>
+                    <button class="font-opt" data-font="ibm" onclick="setFont('ibm',this)">IBM Plex <span>Technical</span></button>
+                    <button class="font-opt" data-font="dm" onclick="setFont('dm',this)">DM Sans <span>Clean</span></button>
+                    <button class="font-opt" data-font="mono" onclick="setFont('mono',this)">Mono <span>Terminal</span></button>
+                    <button class="font-opt" data-font="system" onclick="setFont('system',this)">System <span>Default</span></button>
+                </div>
+            </div>
+            <div class="status">
+                <div class="status-dot" id="statusDot"></div>
+                <span id="statusText">Online</span>
+            </div>
         </div>
     </div>
 
@@ -1608,6 +1841,176 @@
             document.querySelectorAll('.ohs-tab').forEach(el => el.classList.remove('active'));
             document.getElementById('ohs-' + id).classList.add('active');
             btn.classList.add('active');
+            if (id === 'riskmatrix') initRiskMatrix();
+        }
+
+        // ─── Font Picker ──────────────────────────────────────────────────────
+        const FONTS = {
+            barlow:  { body: "'Barlow', system-ui, sans-serif",     mono: "'JetBrains Mono', monospace" },
+            ibm:     { body: "'IBM Plex Sans', system-ui, sans-serif", mono: "'IBM Plex Mono', monospace" },
+            dm:      { body: "'DM Sans', system-ui, sans-serif",    mono: "'JetBrains Mono', monospace" },
+            mono:    { body: "'JetBrains Mono', monospace",         mono: "'JetBrains Mono', monospace" },
+            system:  { body: "system-ui, -apple-system, sans-serif",mono: "'Courier New', monospace" },
+        };
+
+        function toggleFontMenu() {
+            document.getElementById('fontMenu').classList.toggle('open');
+        }
+
+        document.addEventListener('click', e => {
+            if (!e.target.closest('.font-picker')) {
+                document.getElementById('fontMenu').classList.remove('open');
+            }
+        });
+
+        function setFont(key, btn) {
+            const f = FONTS[key];
+            document.body.style.fontFamily = f.body;
+            document.documentElement.style.setProperty('--font-body', f.body);
+            document.documentElement.style.setProperty('--font-mono', f.mono);
+            // update mono elements
+            document.querySelectorAll('.calc-btn,.calc-display,.quiz-score-num,.fc-count,.topic-num,.ohs-field input,.rm-result-score,.rm-cell-score').forEach(el => {
+                el.style.fontFamily = f.mono;
+            });
+            document.querySelectorAll('.font-opt').forEach(o => o.classList.remove('active'));
+            btn.classList.add('active');
+            localStorage.setItem('hazardiq_font', key);
+            document.getElementById('fontMenu').classList.remove('open');
+        }
+
+        // restore saved font
+        const savedFont = localStorage.getItem('hazardiq_font');
+        if (savedFont && FONTS[savedFont]) {
+            const btn = document.querySelector(`.font-opt[data-font="${savedFont}"]`);
+            if (btn) setFont(savedFont, btn);
+        }
+
+        // ─── Risk Matrix ──────────────────────────────────────────────────────
+        const RM_CONTEXTS = {
+            generic:      { l: ['Rare','Unlikely','Possible','Likely','Almost Certain'], c: ['Negligible','Minor','Moderate','Major','Catastrophic'] },
+            construction: { l: ['Rare','Unlikely','Possible','Likely','Very Likely'],    c: ['First Aid','Medical Aid','Lost Time','Serious Injury','Fatality'] },
+            chemical:     { l: ['Rare','Unlikely','Possible','Likely','Almost Certain'], c: ['Trace','Contained','Local Release','Site Release','Major Incident'] },
+            office:       { l: ['Rare','Occasional','Sometimes','Often','Frequent'],     c: ['No Injury','Minor','Moderate','Significant','Severe'] },
+            healthcare:   { l: ['Rare','Unlikely','Possible','Likely','Almost Certain'], c: ['No Harm','Near Miss','Minor Harm','Serious Harm','Death'] },
+        };
+
+        let rmSize = 3;
+        let rmContext = 'generic';
+        let rmCustom = null;
+
+        function getRMLabels() {
+            if (rmCustom) return rmCustom;
+            const ctx = RM_CONTEXTS[rmContext];
+            return { l: ctx.l.slice(0, rmSize), c: ctx.c.slice(0, rmSize) };
+        }
+
+        function rmRating(score, max) {
+            const pct = score / max;
+            if (pct <= 0.2)  return { cls: 'rm-low',      label: 'LOW',      action: 'Monitor with routine procedures. Document in hazard register.' };
+            if (pct <= 0.45) return { cls: 'rm-medium',   label: 'MEDIUM',   action: 'Implement controls. Supervisor review required before proceeding.' };
+            if (pct <= 0.72) return { cls: 'rm-high',     label: 'HIGH',     action: 'Immediate corrective action required. Management approval needed.' };
+            return               { cls: 'rm-critical',  label: 'CRITICAL', action: 'STOP WORK. Eliminate or substitute the hazard before proceeding.' };
+        }
+
+        function initRiskMatrix() {
+            buildRMGrid();
+            buildCustomLabelInputs();
+        }
+
+        function buildRMGrid() {
+            const labels = getRMLabels();
+            const max = rmSize * rmSize;
+            const xRow = document.getElementById('rmXLabels');
+            const grid = document.getElementById('rmGrid');
+
+            // cell size based on matrix size
+            const cellSize = rmSize === 5 ? 54 : rmSize === 4 ? 64 : 80;
+
+            xRow.innerHTML = `<div style="width:${cellSize}px"></div>` +
+                labels.l.map(l => `<div class="rm-x-label" style="width:${cellSize}px">${l}</div>`).join('');
+
+            grid.style.gridTemplateColumns = `${cellSize}px repeat(${rmSize}, ${cellSize}px)`;
+            grid.innerHTML = '';
+
+            for (let c = rmSize; c >= 1; c--) {
+                // row label
+                const rowLabel = document.createElement('div');
+                rowLabel.className = 'rm-x-label';
+                rowLabel.style.cssText = `width:${cellSize}px;height:${cellSize}px;display:flex;align-items:center;justify-content:center;`;
+                rowLabel.textContent = labels.c[c - 1];
+                grid.appendChild(rowLabel);
+
+                for (let l = 1; l <= rmSize; l++) {
+                    const score = l * c;
+                    const r = rmRating(score, max);
+                    const cell = document.createElement('div');
+                    cell.className = `rm-cell ${r.cls}`;
+                    cell.style.cssText = `width:${cellSize}px;height:${cellSize}px;`;
+                    cell.innerHTML = `<div class="rm-cell-score">${score}</div><div class="rm-cell-label">${r.label}</div>`;
+                    cell.onclick = () => selectRMCell(l, c, score, r, cell);
+                    grid.appendChild(cell);
+                }
+            }
+        }
+
+        function selectRMCell(l, c, score, rating, cellEl) {
+            document.querySelectorAll('.rm-cell').forEach(c => c.classList.remove('selected'));
+            cellEl.classList.add('selected');
+            const labels = getRMLabels();
+            const res = document.getElementById('rmResult');
+            res.className = `rm-result show ${rating.cls}`;
+            res.innerHTML = `
+                <div class="rm-result-score">${score}</div>
+                <div class="rm-result-label">${rating.label} RISK</div>
+                <div class="rm-result-action">
+                    <strong>Likelihood:</strong> ${labels.l[l-1]} &nbsp;|&nbsp; <strong>Consequence:</strong> ${labels.c[c-1]}<br><br>
+                    ${rating.action}
+                </div>`;
+        }
+
+        function setMatrixSize(n, btn) {
+            rmSize = n;
+            rmCustom = null;
+            document.querySelectorAll('.rm-size-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('rmResult').className = 'rm-result';
+            buildRMGrid();
+            buildCustomLabelInputs();
+        }
+
+        function loadRMContext(val) {
+            rmContext = val;
+            rmCustom = null;
+            document.getElementById('rmResult').className = 'rm-result';
+            buildRMGrid();
+            buildCustomLabelInputs();
+        }
+
+        function buildCustomLabelInputs() {
+            const labels = getRMLabels();
+            const container = document.getElementById('rmCustomLabels');
+            let html = '<div><div class="rm-cl-label">LIKELIHOOD LABELS</div>';
+            labels.l.forEach((lbl, i) => {
+                html += `<input type="text" placeholder="L${i+1}" value="${lbl}" data-axis="l" data-i="${i}" style="margin-bottom:4px;">`;
+            });
+            html += '</div><div><div class="rm-cl-label">CONSEQUENCE LABELS</div>';
+            labels.c.forEach((lbl, i) => {
+                html += `<input type="text" placeholder="C${i+1}" value="${lbl}" data-axis="c" data-i="${i}" style="margin-bottom:4px;">`;
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function applyCustomLabels() {
+            const inputs = document.querySelectorAll('#rmCustomLabels input');
+            const l = [], c = [];
+            inputs.forEach(inp => {
+                if (inp.dataset.axis === 'l') l.push(inp.value || `L${+inp.dataset.i+1}`);
+                else c.push(inp.value || `C${+inp.dataset.i+1}`);
+            });
+            rmCustom = { l, c };
+            document.getElementById('rmResult').className = 'rm-result';
+            buildRMGrid();
         }
 
         // ─── WBGT Calculator ─────────────────────────────────────────────────
