@@ -1298,6 +1298,38 @@
         .font-opt[data-font="times"]  { font-family: 'Times New Roman', Times, serif; }
         .font-opt[data-font="roma"]   { font-family: 'Cormorant Garamond', 'Times New Roman', serif; font-size: 15px; }
 
+        /* Font size + color theme rows inside picker */
+        .font-menu-divider {
+            border: none; border-top: 1px solid rgba(255,255,255,0.06); margin: 6px 0;
+        }
+        .font-size-row {
+            display: flex; gap: 4px; padding: 4px 8px 6px;
+        }
+        .fsize-btn {
+            flex: 1; background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08); border-radius: 2px;
+            color: #8A8780; cursor: pointer; padding: 5px 0;
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-weight: 700; letter-spacing: 0.06em; transition: .15s;
+        }
+        .fsize-btn:nth-child(1) { font-size: 10px; }
+        .fsize-btn:nth-child(2) { font-size: 12px; }
+        .fsize-btn:nth-child(3) { font-size: 14px; }
+        .fsize-btn:nth-child(4) { font-size: 16px; }
+        .fsize-btn.active { background: rgba(245,166,35,0.12); border-color: rgba(245,166,35,0.35); color: #F5A623; }
+        .fsize-btn:hover { color: #F0EDE8; border-color: rgba(255,255,255,0.2); }
+
+        .color-swatches {
+            display: flex; flex-wrap: wrap; gap: 5px; padding: 4px 8px 8px;
+        }
+        .cswatch {
+            width: 22px; height: 22px; border-radius: 2px;
+            border: 2px solid transparent; cursor: pointer;
+            transition: transform .15s, border-color .15s;
+        }
+        .cswatch:hover { transform: scale(1.15); }
+        .cswatch.active { border-color: #fff; }
+
         /* ── Risk Matrix ─────────────────────────────────────────────────── */
         .rm-config { margin-bottom: 20px; }
         .rm-config-row { display: flex; gap: 16px; flex-wrap: wrap; }
@@ -2246,7 +2278,22 @@
 
         const FONT_MENU_IDS = ['fontMenu', 'fontMenuOHS', 'fontMenuStudy'];
 
+        const FONT_SIZES = { S: '12px', M: '14px', L: '16px', XL: '19px' };
+        const COLOR_THEMES = [
+            { name:'Amber',   accent:'#F5A623', bg:'#0A0B0E', surface:'#0D0E13' },
+            { name:'Red',     accent:'#E84040', bg:'#0A0B0E', surface:'#0D0E13' },
+            { name:'Green',   accent:'#4ade80', bg:'#0A0B0E', surface:'#0D0E13' },
+            { name:'Blue',    accent:'#38bdf8', bg:'#0A0B0E', surface:'#0D0E13' },
+            { name:'Purple',  accent:'#a78bfa', bg:'#0A0B0E', surface:'#0D0E13' },
+            { name:'White',   accent:'#F0EDE8', bg:'#0A0B0E', surface:'#0D0E13' },
+            { name:'Navy bg', accent:'#F5A623', bg:'#050810', surface:'#080c1a' },
+            { name:'Warm bg', accent:'#F5A623', bg:'#0e0c0a', surface:'#131008' },
+            { name:'Light',   accent:'#b85c00', bg:'#F5F2ED', surface:'#EDE9E3' },
+        ];
+
         function buildFontMenus() {
+            const savedSize = localStorage.getItem('hazardiq_size') || 'M';
+            const savedColor = localStorage.getItem('hazardiq_color') || '0';
             const html = `
                 <div class="font-menu-label">TYPEFACE</div>
                 ${Object.entries(FONTS).map(([k,f]) =>
@@ -2254,7 +2301,23 @@
                         style="font-family:${f.body}${k==='mono'?';font-size:12px':''}">
                         ${f.label} <span>${f.sub}</span>
                     </button>`
-                ).join('')}`;
+                ).join('')}
+                <hr class="font-menu-divider">
+                <div class="font-menu-label">SIZE</div>
+                <div class="font-size-row">
+                    ${Object.entries(FONT_SIZES).map(([k]) =>
+                        `<button class="fsize-btn${k===savedSize?' active':''}" data-size="${k}" onclick="setFontSize('${k}',this)">${k}</button>`
+                    ).join('')}
+                </div>
+                <hr class="font-menu-divider">
+                <div class="font-menu-label">ACCENT COLOR</div>
+                <div class="color-swatches">
+                    ${COLOR_THEMES.map((c,i) =>
+                        `<div class="cswatch${i===+savedColor?' active':''}" data-ci="${i}"
+                            style="background:${c.accent}" title="${c.name}"
+                            onclick="setColorTheme(${i},this)"></div>`
+                    ).join('')}
+                </div>`;
             FONT_MENU_IDS.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.innerHTML = html;
@@ -2287,11 +2350,44 @@
             FONT_MENU_IDS.forEach(id => document.getElementById(id)?.classList.remove('open'));
         }
 
+        function setFontSize(key, btn) {
+            const size = FONT_SIZES[key];
+            document.documentElement.style.fontSize = size;
+            document.querySelectorAll('.fsize-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll(`.fsize-btn[data-size="${key}"]`).forEach(b => b.classList.add('active'));
+            localStorage.setItem('hazardiq_size', key);
+        }
+
+        function setColorTheme(idx, el) {
+            const t = COLOR_THEMES[idx];
+            const r = document.documentElement.style;
+            // update CSS variables
+            document.documentElement.style.setProperty('--accent', t.accent);
+            document.documentElement.style.setProperty('--bg-primary', t.bg);
+            document.documentElement.style.setProperty('--bg-secondary', t.surface);
+            document.body.style.background = t.bg;
+            // rebuild menus to reflect active swatch
+            localStorage.setItem('hazardiq_color', idx);
+            document.querySelectorAll('.cswatch').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll(`.cswatch[data-ci="${idx}"]`).forEach(s => s.classList.add('active'));
+            // light theme text flip
+            const isLight = t.bg.startsWith('#F') || t.bg.startsWith('#E') || t.bg.startsWith('#D');
+            document.body.style.color = isLight ? '#1a1a1a' : '#F0EDE8';
+        }
+
         // restore saved font
         const savedFont = localStorage.getItem('hazardiq_font');
         if (savedFont && FONTS[savedFont]) {
             setFont(savedFont, document.querySelector(`.font-opt[data-font="${savedFont}"]`) || {classList:{add:()=>{},remove:()=>{}}});
         }
+
+        // restore saved size
+        const savedSize = localStorage.getItem('hazardiq_size') || 'M';
+        setFontSize(savedSize, {classList:{add:()=>{},remove:()=>{}}});
+
+        // restore saved color
+        const savedColor = localStorage.getItem('hazardiq_color');
+        if (savedColor !== null) setColorTheme(+savedColor, {classList:{add:()=>{},remove:()=>{}}});
 
         // ─── OHS Glossary ─────────────────────────────────────────────────────
         const GLOSSARY = [
