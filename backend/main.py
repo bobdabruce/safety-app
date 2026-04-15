@@ -1699,10 +1699,16 @@ Transform course material into engaging, practical study content. Use these EXAC
 Include 2 Canadian workplace scenarios, mnemonics, bullet-point rapid review. Reference National Fire Code of Canada, provincial OHS legislation, WorkSafeBC. Label difficulty: [BASIC], [INTERMEDIATE], [CHALLENGE]. Tone: Direct, practical, no fluff.
 
 FIRE TOPICS RULE: Whenever the topic involves fire classification, fire suppression, extinguishing agents, or fire prevention:
-1. For each fire CLASS (A, B, C, D, K) listed, immediately follow it with: the correct extinguishing agent(s) AND a one-sentence explanation of HOW that agent extinguishes the fire (the physical/chemical mechanism). Format inline like:
-   **Class A — Ordinary Combustibles** | Agent: Water, ABC dry chemical | How: Water cools fuel below ignition temperature; dry chemical interrupts the free radical chain reaction.
-2. Also include a dedicated subsection "HOW EXTINGUISHING AGENTS WORK" covering: water (cooling), CO₂ (oxygen displacement/smothering), dry chemical ABC/BC (chain reaction interruption), wet chemical (saponification), foam AFFF (vapour blanket), Class D powder (smothering/heat absorption), clean agents FM-200/Novec (chain interruption, no residue), and why Halon is banned.
-3. Always relate each agent to which leg of the fire triangle/tetrahedron it attacks.
+1. When presenting the fire classification table (Class A/B/C/D/K), ALWAYS use exactly these 5 columns:
+   | Class | Fuel Type | Canadian Workplace Example | Extinguishing Agent(s) | How It Works |
+   Fill the "How It Works" column with a precise one-sentence mechanism for each class:
+   - Class A: Water removes heat; ABC dry chemical interrupts the free-radical chain reaction
+   - Class B: CO₂ displaces oxygen (smothers); ABC/BC dry chemical interrupts chain reaction; foam blankets surface suppressing vapours
+   - Class C: CO₂ or clean agent (FM-200/Novec) — non-conductive, no residue; NEVER water (electrocution risk)
+   - Class D: Class-D-specific dry powder smothers and absorbs heat — NEVER water, CO₂, or standard dry chemical (violent reactions)
+   - Class K: Wet chemical causes saponification (soap reaction with hot oil), sealing the surface and cooling below auto-ignition
+2. After the table include a subsection "HOW EXTINGUISHING AGENTS WORK" covering each agent's mechanism and which leg of the fire triangle/tetrahedron it attacks.
+3. Always note what NOT to use on each class and why.
 
 CRITICAL — HYPERLINKS: Whenever you mention a specific piece of legislation, regulation, standard, government body, or official document, format it as a markdown hyperlink to the real official website. Only link to real, accurate URLs."""
 
