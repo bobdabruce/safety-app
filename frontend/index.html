@@ -27,8 +27,7 @@
 
         .calc-btn, .calc-display, .ohs-result .result-value,
         .quiz-score-num, .fc-count, .topic-num,
-        .ohs-field input[type=number],
-        .study-content table td:last-child {
+        .ohs-field input[type=number] {
             font-family: 'JetBrains Mono', 'Courier New', monospace;
         }
 
@@ -860,6 +859,35 @@
             border-left: 2px solid #F5A623; margin: 16px 0;
             padding: 14px 18px; background: rgba(245,166,35,0.04);
             color: #D4D0CA; font-size: 13px; line-height: 1.65;
+        }
+        .study-content pre {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-left: 2px solid rgba(245,166,35,0.4);
+            border-radius: 2px;
+            padding: 16px 18px;
+            margin: 14px 0;
+            overflow-x: auto;
+            font-family: inherit;
+            font-size: 13.5px;
+            line-height: 1.7;
+            color: #D4D0CA;
+            white-space: pre-wrap;
+        }
+        .study-content pre code {
+            font-family: inherit;
+            font-size: inherit;
+            background: none;
+            padding: 0;
+            color: inherit;
+        }
+        .study-content code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            background: rgba(255,255,255,0.06);
+            padding: 2px 6px;
+            border-radius: 2px;
+            color: #F5A623;
         }
 
         /* Flashcards */

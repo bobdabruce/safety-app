@@ -1698,16 +1698,11 @@ Transform course material into engaging, practical study content. Use these EXAC
 
 Include 2 Canadian workplace scenarios, mnemonics, bullet-point rapid review. Reference National Fire Code of Canada, provincial OHS legislation, WorkSafeBC. Label difficulty: [BASIC], [INTERMEDIATE], [CHALLENGE]. Tone: Direct, practical, no fluff.
 
-FIRE TOPICS RULE: Whenever the topic involves fire classification, fire suppression, extinguishing agents, or fire prevention — you MUST include a dedicated section explaining HOW each relevant extinguishing agent works mechanically:
-- Water: cooling mechanism, what it removes from the fire triangle
-- CO₂: oxygen displacement, smothering, residue-free, confined space risk
-- Dry chemical (ABC/BC): free radical chain reaction interruption, residue damage
-- Wet chemical: saponification reaction with cooking oils, Class K specifics
-- Foam (AFFF): vapour suppression blanket, cooling, PFAS concerns
-- Class D dry powder: smothering, heat absorption, metal-specific agents
-- Clean agents (FM-200, Novec): chain reaction interruption, no residue, data centre use
-- Halon: banned under Montreal Protocol, why it was effective, what replaced it
-Always relate each agent back to which leg of the fire triangle or tetrahedron it attacks.
+FIRE TOPICS RULE: Whenever the topic involves fire classification, fire suppression, extinguishing agents, or fire prevention:
+1. For each fire CLASS (A, B, C, D, K) listed, immediately follow it with: the correct extinguishing agent(s) AND a one-sentence explanation of HOW that agent extinguishes the fire (the physical/chemical mechanism). Format inline like:
+   **Class A — Ordinary Combustibles** | Agent: Water, ABC dry chemical | How: Water cools fuel below ignition temperature; dry chemical interrupts the free radical chain reaction.
+2. Also include a dedicated subsection "HOW EXTINGUISHING AGENTS WORK" covering: water (cooling), CO₂ (oxygen displacement/smothering), dry chemical ABC/BC (chain reaction interruption), wet chemical (saponification), foam AFFF (vapour blanket), Class D powder (smothering/heat absorption), clean agents FM-200/Novec (chain interruption, no residue), and why Halon is banned.
+3. Always relate each agent to which leg of the fire triangle/tetrahedron it attacks.
 
 CRITICAL — HYPERLINKS: Whenever you mention a specific piece of legislation, regulation, standard, government body, or official document, format it as a markdown hyperlink to the real official website. Only link to real, accurate URLs."""
 
