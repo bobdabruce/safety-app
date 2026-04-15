@@ -60,6 +60,9 @@ SCREENSHOTS_PATH = Path.home() / "Desktop"
 UPLOADS_PATH = DATA_DIR / "uploads"
 UPLOADS_PATH.mkdir(exist_ok=True)
 
+# Active document context — persists the last uploaded file's text for follow-up questions
+active_doc: dict = {"filename": None, "text": None}
+
 LIBRARY_PATH = DATA_DIR / "library"
 LIBRARY_PATH.mkdir(exist_ok=True)
 
@@ -433,10 +436,13 @@ async def chat(request: ChatRequest):
         total_value = sum(c.get("estimated_value", 0) or 0 for c in cards)
         total_cost = sum(c.get("purchase_price", 0) or 0 for c in cards)
         system += f"\n\nCard Collection: {len(cards)} cards, est. value ${total_value:.2f}, cost ${total_cost:.2f}, P/L ${total_value - total_cost:.2f}"
-        # List top 5 most valuable cards
         sorted_cards = sorted(cards, key=lambda x: x.get("estimated_value", 0) or 0, reverse=True)[:5]
         if sorted_cards:
             system += "\nTop cards: " + ", ".join([f"{c.get('name', 'Unknown')} (${c.get('estimated_value', 0)})" for c in sorted_cards])
+
+    # Inject active document context so follow-up questions can reference the uploaded file
+    if active_doc["text"]:
+        system += f"\n\nACTIVE DOCUMENT — the user previously uploaded '{active_doc['filename']}'. Its full content is below. Answer questions about it directly without asking the user to re-upload or copy/paste.\n\n---\n{active_doc['text'][:40000]}\n---"
 
     try:
         response = client.messages.create(
@@ -710,17 +716,16 @@ async def chat_with_upload(
             file_descriptions.append(f"[Image: {file.filename}]")
 
         elif file_ext == '.pdf':
-            # PDF - extract text (basic approach)
             try:
                 import fitz  # PyMuPDF
                 pdf = fitz.open(stream=file_bytes, filetype="pdf")
-                text = ""
-                for page in pdf:
-                    text += page.get_text()
+                text = "".join(page.get_text() for page in pdf)
                 pdf.close()
+                active_doc["filename"] = file.filename
+                active_doc["text"] = text
                 content_parts.append({
                     "type": "text",
-                    "text": f"[PDF Content from {file.filename}]:\n{text[:5000]}"  # Limit to 5000 chars
+                    "text": f"[PDF Content from {file.filename}]:\n{text[:40000]}"
                 })
                 file_descriptions.append(f"[PDF: {file.filename}]")
             except ImportError:
@@ -730,13 +735,30 @@ async def chat_with_upload(
                 })
                 file_descriptions.append(f"[PDF: {file.filename}]")
 
-        elif file_ext in ['.txt', '.md', '.csv', '.json']:
-            # Text files
+        elif file_ext == '.docx':
             try:
-                text_content = file_bytes.decode('utf-8')
+                from docx import Document
+                import io
+                doc = Document(io.BytesIO(file_bytes))
+                text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+                active_doc["filename"] = file.filename
+                active_doc["text"] = text
                 content_parts.append({
                     "type": "text",
-                    "text": f"[File: {file.filename}]:\n{text_content[:5000]}"
+                    "text": f"[Word Document from {file.filename}]:\n{text[:40000]}"
+                })
+                file_descriptions.append(f"[Word: {file.filename}]")
+            except Exception as e:
+                file_descriptions.append(f"[Word: {file.filename} - could not read: {e}]")
+
+        elif file_ext in ['.txt', '.md', '.csv', '.json']:
+            try:
+                text_content = file_bytes.decode('utf-8')
+                active_doc["filename"] = file.filename
+                active_doc["text"] = text_content
+                content_parts.append({
+                    "type": "text",
+                    "text": f"[File: {file.filename}]:\n{text_content[:40000]}"
                 })
                 file_descriptions.append(f"[Text: {file.filename}]")
             except:
