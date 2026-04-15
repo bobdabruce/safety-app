@@ -2281,7 +2281,7 @@
 
         const FONT_MENU_IDS = ['fontMenu', 'fontMenuOHS', 'fontMenuStudy'];
 
-        const FONT_SIZES = { S: '12px', M: '14px', L: '16px', XL: '19px' };
+        const FONT_SIZES = { S: '0.82', M: '1', L: '1.18', XL: '1.38' };
         const COLOR_THEMES = [
             { name:'Amber',   accent:'#F5A623', accentRgb:'245,166,35',  bg:'#0A0B0E', surface:'#0D0E13', tertiary:'#111318' },
             { name:'Red',     accent:'#E84040', accentRgb:'232,64,64',   bg:'#0A0B0E', surface:'#0D0E13', tertiary:'#111318' },
@@ -2354,8 +2354,8 @@
         }
 
         function setFontSize(key, btn) {
-            const size = FONT_SIZES[key];
-            document.documentElement.style.fontSize = size;
+            const zoom = FONT_SIZES[key];
+            document.body.style.zoom = zoom;
             document.querySelectorAll('.fsize-btn').forEach(b => b.classList.remove('active'));
             document.querySelectorAll(`.fsize-btn[data-size="${key}"]`).forEach(b => b.classList.add('active'));
             localStorage.setItem('hazardiq_size', key);
