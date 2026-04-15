@@ -1698,6 +1698,17 @@ Transform course material into engaging, practical study content. Use these EXAC
 
 Include 2 Canadian workplace scenarios, mnemonics, bullet-point rapid review. Reference National Fire Code of Canada, provincial OHS legislation, WorkSafeBC. Label difficulty: [BASIC], [INTERMEDIATE], [CHALLENGE]. Tone: Direct, practical, no fluff.
 
+FIRE TOPICS RULE: Whenever the topic involves fire classification, fire suppression, extinguishing agents, or fire prevention — you MUST include a dedicated section explaining HOW each relevant extinguishing agent works mechanically:
+- Water: cooling mechanism, what it removes from the fire triangle
+- CO₂: oxygen displacement, smothering, residue-free, confined space risk
+- Dry chemical (ABC/BC): free radical chain reaction interruption, residue damage
+- Wet chemical: saponification reaction with cooking oils, Class K specifics
+- Foam (AFFF): vapour suppression blanket, cooling, PFAS concerns
+- Class D dry powder: smothering, heat absorption, metal-specific agents
+- Clean agents (FM-200, Novec): chain reaction interruption, no residue, data centre use
+- Halon: banned under Montreal Protocol, why it was effective, what replaced it
+Always relate each agent back to which leg of the fire triangle or tetrahedron it attacks.
+
 CRITICAL — HYPERLINKS: Whenever you mention a specific piece of legislation, regulation, standard, government body, or official document, format it as a markdown hyperlink to the real official website. Only link to real, accurate URLs."""
 
 DISTRACTOR_RULE = "DISTRACTOR QUALITY RULE: all 4 options plausible and similar length. Never make correct answer longest. No obviously wrong distractors."
