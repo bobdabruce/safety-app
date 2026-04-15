@@ -6,6 +6,7 @@ venv/
 node_modules/
 *.db
 backend/memory.json
+**/active_doc.json
 backend/duplicates_log.txt
 server.log
 uploads/

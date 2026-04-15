@@ -61,7 +61,18 @@ UPLOADS_PATH = DATA_DIR / "uploads"
 UPLOADS_PATH.mkdir(exist_ok=True)
 
 # Active document context — persists the last uploaded file's text for follow-up questions
-active_doc: dict = {"filename": None, "text": None}
+ACTIVE_DOC_FILE = DATA_DIR / "active_doc.json"
+
+def load_active_doc() -> dict:
+    if ACTIVE_DOC_FILE.exists():
+        try:
+            return json.loads(ACTIVE_DOC_FILE.read_text())
+        except Exception:
+            pass
+    return {"filename": None, "text": None}
+
+def save_active_doc(filename: str, text: str):
+    ACTIVE_DOC_FILE.write_text(json.dumps({"filename": filename, "text": text}, ensure_ascii=False))
 
 LIBRARY_PATH = DATA_DIR / "library"
 LIBRARY_PATH.mkdir(exist_ok=True)
@@ -441,8 +452,9 @@ async def chat(request: ChatRequest):
             system += "\nTop cards: " + ", ".join([f"{c.get('name', 'Unknown')} (${c.get('estimated_value', 0)})" for c in sorted_cards])
 
     # Inject active document context so follow-up questions can reference the uploaded file
-    if active_doc["text"]:
-        system += f"\n\nACTIVE DOCUMENT — the user previously uploaded '{active_doc['filename']}'. Its full content is below. Answer questions about it directly without asking the user to re-upload or copy/paste.\n\n---\n{active_doc['text'][:40000]}\n---"
+    _doc = load_active_doc()
+    if _doc["text"]:
+        system += f"\n\nACTIVE DOCUMENT — the user previously uploaded '{_doc['filename']}'. Its full content is below. Answer questions about it directly without asking the user to re-upload or copy/paste.\n\n---\n{_doc['text'][:40000]}\n---"
 
     try:
         response = client.messages.create(
@@ -721,8 +733,7 @@ async def chat_with_upload(
                 pdf = fitz.open(stream=file_bytes, filetype="pdf")
                 text = "".join(page.get_text() for page in pdf)
                 pdf.close()
-                active_doc["filename"] = file.filename
-                active_doc["text"] = text
+                save_active_doc(file.filename, text)
                 content_parts.append({
                     "type": "text",
                     "text": f"[PDF Content from {file.filename}]:\n{text[:40000]}"
@@ -741,8 +752,7 @@ async def chat_with_upload(
                 import io
                 doc = Document(io.BytesIO(file_bytes))
                 text = "\n".join(p.text for p in doc.paragraphs if p.text.strip())
-                active_doc["filename"] = file.filename
-                active_doc["text"] = text
+                save_active_doc(file.filename, text)
                 content_parts.append({
                     "type": "text",
                     "text": f"[Word Document from {file.filename}]:\n{text[:40000]}"
@@ -754,8 +764,7 @@ async def chat_with_upload(
         elif file_ext in ['.txt', '.md', '.csv', '.json']:
             try:
                 text_content = file_bytes.decode('utf-8')
-                active_doc["filename"] = file.filename
-                active_doc["text"] = text_content
+                save_active_doc(file.filename, text_content)
                 content_parts.append({
                     "type": "text",
                     "text": f"[File: {file.filename}]:\n{text_content[:40000]}"
