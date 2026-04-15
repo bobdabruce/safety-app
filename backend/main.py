@@ -1,5 +1,5 @@
 """
-SafetyNomad AI - Backend Server
+HazardIQ - Backend Server
 Phase 1: Chat + Memory + File Organizer
 Phase 2: File uploads (images, PDFs, docs)
 """
@@ -30,12 +30,12 @@ logging.basicConfig(
         logging.StreamHandler()
     ]
 )
-logger = logging.getLogger("SafetyNomad")
+logger = logging.getLogger("HazardIQ")
 
 # Load environment variables
 load_dotenv(Path(__file__).parent.parent / ".env")
 
-app = FastAPI(title="SafetyNomad AI")
+app = FastAPI(title="HazardIQ")
 
 # Allow requests from frontend
 app.add_middleware(
@@ -108,8 +108,8 @@ def load_memory():
 def save_memory(memory):
     MEMORY_FILE.write_text(json.dumps(memory, indent=2))
 
-# System prompt for SafetyNomad
-SYSTEM_PROMPT = """You are SafetyNomad AI, Bob's personal AI assistant running on his MacBook.
+# System prompt for HazardIQ
+SYSTEM_PROMPT = """You are HazardIQ, Bob's personal AI assistant running on his MacBook.
 
 About Bob:
 - 50 years old, Canadian, living in Cambodia
@@ -1620,7 +1620,7 @@ async def search_card_price(q: str):
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "service": "SafetyNomad AI", "phase": 1}
+    return {"status": "ok", "service": "HazardIQ", "phase": 1}
 
 # ============ OHS STUDY PLATFORM ============
 
@@ -1686,7 +1686,7 @@ OHS_CHAPTER_CONTEXT = {
     100: "\nOHS 100: Introduction to OHS. Internal Responsibility System, worker and employer duties, right to refuse, JHSC, OHS legislation overview, Canadian context.",
 }
 
-OHS_BASE_PROMPT = """You are a world-leading professor in OHS, built into SafetyNomad AI — a Canadian-focused OHS study system.
+OHS_BASE_PROMPT = """You are a world-leading professor in OHS, built into HazardIQ — a Canadian-focused OHS study system.
 
 Transform course material into engaging, practical study content. Use these EXACT section headers in order:
 ## KEY CONCEPTS

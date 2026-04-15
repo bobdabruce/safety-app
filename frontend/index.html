@@ -6,7 +6,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a1a2e">
-    <title>SafetyNomad AI</title>
+    <title>HazardIQ</title>
     <link rel="manifest" href="/static/manifest.json">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
@@ -1048,7 +1048,7 @@
     </div>
 
     <div class="header">
-        <h1><span class="logo">🛡️</span> SafetyNomad AI</h1>
+        <h1><span class="logo">⚠️</span> HazardIQ</h1>
         <div class="status">
             <div class="status-dot" id="statusDot"></div>
             <span id="statusText">Online</span>
@@ -1411,7 +1411,7 @@
         function clearNotes() {
             if (confirm('Clear all notes?')) {
                 document.getElementById('notepadText').value = '';
-                localStorage.removeItem('safetynomad_notes');
+                localStorage.removeItem('hazardiq_notes');
                 document.getElementById('notepadSavedMsg').textContent = '';
             }
         }
@@ -1425,11 +1425,11 @@
                 if (d.content) ta.value = d.content;
                 else {
                     // Migrate old localStorage notes if any
-                    const old = localStorage.getItem('safetynomad_notes');
+                    const old = localStorage.getItem('hazardiq_notes');
                     if (old) ta.value = old;
                 }
             }).catch(() => {
-                const old = localStorage.getItem('safetynomad_notes');
+                const old = localStorage.getItem('hazardiq_notes');
                 if (old) ta.value = old;
             });
 
@@ -1457,7 +1457,7 @@
                         setTimeout(() => { msg.textContent = ''; }, 2000);
                     }).catch(() => {
                         // Fallback to localStorage if server unavailable
-                        localStorage.setItem('safetynomad_notes', ta.value);
+                        localStorage.setItem('hazardiq_notes', ta.value);
                         msg.textContent = 'saved locally';
                         setTimeout(() => { msg.textContent = ''; }, 2000);
                     });

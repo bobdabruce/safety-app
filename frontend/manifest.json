@@ -1,7 +1,7 @@
 {
-  "name": "SafetyNomad AI",
-  "short_name": "SafetyNomad",
-  "description": "Your personal AI assistant",
+  "name": "HazardIQ",
+  "short_name": "HazardIQ",
+  "description": "AI-powered OHS study and field safety platform",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1a2e",
