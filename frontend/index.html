@@ -10,7 +10,7 @@
     <link rel="manifest" href="/static/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -962,11 +962,14 @@
         }
         .font-opt:hover, .font-opt.active { background: rgba(245,166,35,0.08); color: #F5A623; }
         .font-opt span { font-size: 10px; color: #6A6760; font-weight: 400; }
-        .font-opt[data-font="ibm"] { font-family: 'IBM Plex Sans', sans-serif; }
-        .font-opt[data-font="dm"] { font-family: 'DM Sans', sans-serif; }
-        .font-opt[data-font="mono"] { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+        .font-opt[data-font="ibm"]    { font-family: 'IBM Plex Sans', sans-serif; }
+        .font-opt[data-font="dm"]     { font-family: 'DM Sans', sans-serif; }
+        .font-opt[data-font="mono"]   { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
         .font-opt[data-font="system"] { font-family: system-ui, sans-serif; }
         .font-opt[data-font="barlow"] { font-family: 'Barlow', sans-serif; }
+        .font-opt[data-font="arial"]  { font-family: Arial, Helvetica, sans-serif; }
+        .font-opt[data-font="times"]  { font-family: 'Times New Roman', Times, serif; }
+        .font-opt[data-font="roma"]   { font-family: 'Cormorant Garamond', 'Times New Roman', serif; font-size: 15px; }
 
         /* ── Risk Matrix ─────────────────────────────────────────────────── */
         .rm-config { margin-bottom: 20px; }
@@ -1120,8 +1123,14 @@
     <!-- OHS Tools Panel -->
     <div class="ohs-overlay" id="ohsPanel">
         <div class="ohs-header">
-            <h2>🦺 OHS Tools</h2>
-            <button class="ohs-close" onclick="toggleOHSPanel()">✕</button>
+            <h2>OHS Tools</h2>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <div class="font-picker" id="fontPickerOHS">
+                    <button class="font-picker-btn" onclick="toggleFontMenu('fontMenuOHS')">Aa</button>
+                    <div class="font-menu" id="fontMenuOHS"></div>
+                </div>
+                <button class="ohs-close" onclick="toggleOHSPanel()">✕</button>
+            </div>
         </div>
         <div class="ohs-tabs">
             <button class="ohs-tab active" onclick="switchOHSTab('twl', this)">TWL</button>
@@ -1348,8 +1357,12 @@
     <div class="study-overlay" id="studyPanel">
         <div class="study-header">
             <button class="study-back" id="studyBackBtn" onclick="studyBack()">← Back</button>
-            <div class="study-title" id="studyPanelTitle">📚 OHS Study</div>
+            <div class="study-title" id="studyPanelTitle">OHS Study</div>
             <div class="study-actions-bar" id="studyActionsBar"></div>
+            <div class="font-picker" id="fontPickerStudy">
+                <button class="font-picker-btn" onclick="toggleFontMenu('fontMenuStudy')">Aa</button>
+                <div class="font-menu" id="fontMenuStudy"></div>
+            </div>
             <button class="study-back" onclick="closeStudyPanel()">✕</button>
         </div>
         <div class="study-body" id="studyBody">
@@ -1365,8 +1378,11 @@
                 <div class="font-menu" id="fontMenu">
                     <div class="font-menu-label">TYPEFACE</div>
                     <button class="font-opt" data-font="barlow" onclick="setFont('barlow',this)">Barlow <span>Industrial</span></button>
+                    <button class="font-opt" data-font="arial" onclick="setFont('arial',this)">Arial <span>Clean Sans</span></button>
+                    <button class="font-opt" data-font="times" onclick="setFont('times',this)">Times New Roman <span>Classic Serif</span></button>
+                    <button class="font-opt" data-font="roma" onclick="setFont('roma',this)">Roma <span>Elegant Serif</span></button>
                     <button class="font-opt" data-font="ibm" onclick="setFont('ibm',this)">IBM Plex <span>Technical</span></button>
-                    <button class="font-opt" data-font="dm" onclick="setFont('dm',this)">DM Sans <span>Clean</span></button>
+                    <button class="font-opt" data-font="dm" onclick="setFont('dm',this)">DM Sans <span>Modern</span></button>
                     <button class="font-opt" data-font="mono" onclick="setFont('mono',this)">Mono <span>Terminal</span></button>
                     <button class="font-opt" data-font="system" onclick="setFont('system',this)">System <span>Default</span></button>
                 </div>
@@ -1846,43 +1862,63 @@
 
         // ─── Font Picker ──────────────────────────────────────────────────────
         const FONTS = {
-            barlow:  { body: "'Barlow', system-ui, sans-serif",     mono: "'JetBrains Mono', monospace" },
-            ibm:     { body: "'IBM Plex Sans', system-ui, sans-serif", mono: "'IBM Plex Mono', monospace" },
-            dm:      { body: "'DM Sans', system-ui, sans-serif",    mono: "'JetBrains Mono', monospace" },
-            mono:    { body: "'JetBrains Mono', monospace",         mono: "'JetBrains Mono', monospace" },
-            system:  { body: "system-ui, -apple-system, sans-serif",mono: "'Courier New', monospace" },
+            barlow:  { label: 'Barlow',           sub: 'Industrial',   body: "'Barlow', system-ui, sans-serif",                mono: "'JetBrains Mono', monospace" },
+            arial:   { label: 'Arial',             sub: 'Clean Sans',   body: "Arial, Helvetica, sans-serif",                   mono: "'Courier New', monospace" },
+            times:   { label: 'Times New Roman',   sub: 'Classic Serif',body: "'Times New Roman', Times, serif",                mono: "'Courier New', monospace" },
+            roma:    { label: 'Roma',              sub: 'Elegant Serif',body: "'Cormorant Garamond', 'Times New Roman', serif",  mono: "'Courier New', monospace" },
+            ibm:     { label: 'IBM Plex',          sub: 'Technical',    body: "'IBM Plex Sans', system-ui, sans-serif",          mono: "'IBM Plex Mono', monospace" },
+            dm:      { label: 'DM Sans',           sub: 'Modern',       body: "'DM Sans', system-ui, sans-serif",               mono: "'JetBrains Mono', monospace" },
+            mono:    { label: 'Mono',              sub: 'Terminal',     body: "'JetBrains Mono', monospace",                    mono: "'JetBrains Mono', monospace" },
+            system:  { label: 'System',            sub: 'Default',      body: "system-ui, -apple-system, sans-serif",           mono: "'Courier New', monospace" },
         };
 
-        function toggleFontMenu() {
-            document.getElementById('fontMenu').classList.toggle('open');
+        const FONT_MENU_IDS = ['fontMenu', 'fontMenuOHS', 'fontMenuStudy'];
+
+        function buildFontMenus() {
+            const html = `
+                <div class="font-menu-label">TYPEFACE</div>
+                ${Object.entries(FONTS).map(([k,f]) =>
+                    `<button class="font-opt" data-font="${k}" onclick="setFont('${k}',this)"
+                        style="font-family:${f.body}${k==='mono'?';font-size:12px':''}">
+                        ${f.label} <span>${f.sub}</span>
+                    </button>`
+                ).join('')}`;
+            FONT_MENU_IDS.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.innerHTML = html;
+            });
+        }
+        buildFontMenus();
+
+        function toggleFontMenu(menuId = 'fontMenu') {
+            const target = document.getElementById(menuId);
+            const wasOpen = target.classList.contains('open');
+            FONT_MENU_IDS.forEach(id => document.getElementById(id)?.classList.remove('open'));
+            if (!wasOpen) target.classList.add('open');
         }
 
         document.addEventListener('click', e => {
             if (!e.target.closest('.font-picker')) {
-                document.getElementById('fontMenu').classList.remove('open');
+                FONT_MENU_IDS.forEach(id => document.getElementById(id)?.classList.remove('open'));
             }
         });
 
         function setFont(key, btn) {
             const f = FONTS[key];
             document.body.style.fontFamily = f.body;
-            document.documentElement.style.setProperty('--font-body', f.body);
-            document.documentElement.style.setProperty('--font-mono', f.mono);
-            // update mono elements
             document.querySelectorAll('.calc-btn,.calc-display,.quiz-score-num,.fc-count,.topic-num,.ohs-field input,.rm-result-score,.rm-cell-score').forEach(el => {
                 el.style.fontFamily = f.mono;
             });
             document.querySelectorAll('.font-opt').forEach(o => o.classList.remove('active'));
-            btn.classList.add('active');
+            document.querySelectorAll(`.font-opt[data-font="${key}"]`).forEach(o => o.classList.add('active'));
             localStorage.setItem('hazardiq_font', key);
-            document.getElementById('fontMenu').classList.remove('open');
+            FONT_MENU_IDS.forEach(id => document.getElementById(id)?.classList.remove('open'));
         }
 
         // restore saved font
         const savedFont = localStorage.getItem('hazardiq_font');
         if (savedFont && FONTS[savedFont]) {
-            const btn = document.querySelector(`.font-opt[data-font="${savedFont}"]`);
-            if (btn) setFont(savedFont, btn);
+            setFont(savedFont, document.querySelector(`.font-opt[data-font="${savedFont}"]`) || {classList:{add:()=>{},remove:()=>{}}});
         }
 
         // ─── Risk Matrix ──────────────────────────────────────────────────────
