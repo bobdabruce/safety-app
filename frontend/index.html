@@ -8,9 +8,29 @@
     <meta name="theme-color" content="#1a1a2e">
     <title>HazardIQ</title>
     <link rel="manifest" href="/static/manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        /* Typography helpers */
+        .quick-btn, .ohs-tab, .content-tab, .generate-btn, .course-act-btn,
+        .study-back, .study-title, .ohs-header h2, .sources-title,
+        .course-code, .topic-count, .fc-label, .fc-diff, .quiz-q-num,
+        .quiz-submit-btn, .ohs-calc-btn, .notepad-btn, .notes-fab,
+        .study-content h2, .study-content h3, .study-content h4,
+        .study-content th, .risk-badge {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+        }
+
+        .calc-btn, .calc-display, .ohs-result .result-value,
+        .quiz-score-num, .fc-count, .topic-num,
+        .ohs-field input[type=number],
+        .study-content table td:last-child {
+            font-family: 'JetBrains Mono', 'Courier New', monospace;
+        }
 
         :root {
             --bg-primary: #0A0B0E;
@@ -28,7 +48,7 @@
         }
 
         body {
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: 'Barlow', system-ui, sans-serif;
             background: #0A0B0E;
             min-height: 100vh;
             min-height: -webkit-fill-available;
@@ -47,7 +67,8 @@
         }
 
         .header h1 {
-            font-size: 1rem;
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 1.2rem;
             font-weight: 800;
             letter-spacing: 0.16em;
             text-transform: uppercase;
