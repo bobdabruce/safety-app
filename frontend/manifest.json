@@ -1,7 +1,7 @@
 {
-  "name": "HazardIQ",
+  "name": "HazardIQ — COHSES OHS Study App",
   "short_name": "HazardIQ",
-  "description": "AI-powered OHS study and field safety platform",
+  "description": "AI-powered study app for COHSES OHS certification. Study OHS140, OHS145, fire safety, hazard ID, risk assessment and more. Canadian occupational health and safety.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#1a1a2e",
