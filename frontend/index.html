@@ -908,6 +908,178 @@
         .loading-dots::after { content: ''; animation: dots 1.2s infinite; }
         @keyframes dots { 0%{content:'.'} 33%{content:'..'} 66%{content:'...'} }
 
+        /* ── Floating Chat Widget ────────────────────────────────────────────── */
+        .fchat-btn {
+            position: fixed;
+            bottom: 90px;
+            left: 16px;
+            z-index: 10001;
+            padding: 8px 14px;
+            border-radius: 3px;
+            background: #0D0E13;
+            border: 1px solid rgba(245,166,35,0.3);
+            cursor: pointer;
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: #F5A623;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        .fchat-btn:hover { background: rgba(245,166,35,0.08); border-color: rgba(245,166,35,0.6); }
+        .fchat-btn .fchat-unread {
+            display: none;
+            background: #E84040;
+            color: #fff;
+            font-size: 9px;
+            font-weight: 800;
+            padding: 1px 5px;
+            border-radius: 2px;
+            margin-left: 5px;
+        }
+        .fchat-btn .fchat-unread.show { display: inline; }
+
+        .fchat-panel {
+            position: fixed;
+            bottom: 140px;
+            left: 16px;
+            width: 340px;
+            max-width: calc(100vw - 32px);
+            height: 460px;
+            max-height: calc(100vh - 180px);
+            background: #0D0E13;
+            border: 1px solid rgba(245,166,35,0.2);
+            border-radius: 3px;
+            z-index: 10002;
+            display: flex;
+            flex-direction: column;
+            transform: translateY(20px);
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+        }
+        .fchat-panel.open {
+            transform: translateY(0);
+            opacity: 1;
+            pointer-events: all;
+        }
+        .fchat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 14px;
+            border-bottom: 1px solid rgba(245,166,35,0.15);
+            flex-shrink: 0;
+        }
+        .fchat-header-title {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            color: #F5A623;
+            text-transform: uppercase;
+        }
+        .fchat-header-sub {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
+            font-size: 9px;
+            color: #6A6760;
+            letter-spacing: 0.08em;
+        }
+        .fchat-close {
+            background: none;
+            border: none;
+            color: #6A6760;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 6px;
+            border-radius: 2px;
+            transition: color 0.15s;
+        }
+        .fchat-close:hover { color: #E84040; }
+        .fchat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .fchat-msg {
+            max-width: 90%;
+            padding: 9px 12px;
+            border-radius: 2px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .fchat-msg.user {
+            align-self: flex-end;
+            background: rgba(245,166,35,0.1);
+            border: 1px solid rgba(245,166,35,0.2);
+            color: #F0EDE8;
+        }
+        .fchat-msg.ai {
+            align-self: flex-start;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            color: #D4D0CA;
+        }
+        .fchat-msg.ai strong { color: #F0EDE8; }
+        .fchat-msg.ai a { color: #F5A623; border-bottom: 1px solid rgba(245,166,35,0.3); text-decoration: none; }
+        .fchat-typing {
+            align-self: flex-start;
+            display: none;
+            gap: 4px;
+            padding: 10px 14px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 2px;
+        }
+        .fchat-typing.show { display: flex; }
+        .fchat-typing span {
+            width: 6px; height: 6px;
+            background: #6A6760;
+            border-radius: 50%;
+            animation: bounce 1.4s infinite;
+        }
+        .fchat-typing span:nth-child(2) { animation-delay: 0.2s; }
+        .fchat-typing span:nth-child(3) { animation-delay: 0.4s; }
+        .fchat-input-row {
+            display: flex;
+            gap: 8px;
+            padding: 10px 12px;
+            border-top: 1px solid rgba(255,255,255,0.06);
+            flex-shrink: 0;
+        }
+        .fchat-input {
+            flex: 1;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 2px;
+            padding: 8px 12px;
+            color: #F0EDE8;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none;
+            resize: none;
+            max-height: 80px;
+        }
+        .fchat-input:focus { border-color: rgba(245,166,35,0.4); }
+        .fchat-send {
+            background: #F5A623;
+            border: none;
+            border-radius: 2px;
+            color: #0A0B0E;
+            font-size: 14px;
+            font-weight: 700;
+            padding: 8px 12px;
+            cursor: pointer;
+            align-self: flex-end;
+            transition: opacity 0.15s;
+        }
+        .fchat-send:hover { opacity: 0.85; }
+        .fchat-send:disabled { opacity: 0.4; cursor: not-allowed; }
+
         /* ── Font Picker ─────────────────────────────────────────────────── */
         .font-picker { position: relative; }
         .font-picker-btn {
@@ -1119,6 +1291,31 @@
 
     <!-- Floating Notes Button — always visible on every screen -->
     <button class="notes-fab" onclick="toggleNotepad()" title="Notes (press N)">// NOTES</button>
+
+    <!-- Floating Chat Widget -->
+    <button class="fchat-btn" onclick="toggleFChat()" id="fchatBtn">
+        // ASK AI <span class="fchat-unread" id="fchatUnread">1</span>
+    </button>
+    <div class="fchat-panel" id="fchatPanel">
+        <div class="fchat-header">
+            <div>
+                <div class="fchat-header-title">HazardIQ Assistant</div>
+                <div class="fchat-header-sub">Ask anything — OHS, safety, study help</div>
+            </div>
+            <button class="fchat-close" onclick="toggleFChat()">✕</button>
+        </div>
+        <div class="fchat-messages" id="fchatMessages">
+            <div class="fchat-msg ai">Hi Bob. Ask me anything — OHS questions, help with a topic, or what you're working on right now.</div>
+        </div>
+        <div class="fchat-typing" id="fchatTyping">
+            <span></span><span></span><span></span>
+        </div>
+        <div class="fchat-input-row">
+            <textarea class="fchat-input" id="fchatInput" placeholder="Ask a question..." rows="1"
+                onkeydown="fchatKeydown(event)" oninput="autoResizeFChat(this)"></textarea>
+            <button class="fchat-send" id="fchatSend" onclick="sendFChat()">➤</button>
+        </div>
+    </div>
 
     <!-- OHS Tools Panel -->
     <div class="ohs-overlay" id="ohsPanel">
@@ -1919,6 +2116,85 @@
         const savedFont = localStorage.getItem('hazardiq_font');
         if (savedFont && FONTS[savedFont]) {
             setFont(savedFont, document.querySelector(`.font-opt[data-font="${savedFont}"]`) || {classList:{add:()=>{},remove:()=>{}}});
+        }
+
+        // ─── Floating Chat Widget ─────────────────────────────────────────────
+        let fchatOpen = false;
+        let fchatHistory = [];
+
+        function toggleFChat() {
+            fchatOpen = !fchatOpen;
+            document.getElementById('fchatPanel').classList.toggle('open', fchatOpen);
+            if (fchatOpen) {
+                document.getElementById('fchatUnread').classList.remove('show');
+                document.getElementById('fchatInput').focus();
+                scrollFChat();
+            }
+        }
+
+        function scrollFChat() {
+            const msgs = document.getElementById('fchatMessages');
+            msgs.scrollTop = msgs.scrollHeight;
+        }
+
+        function autoResizeFChat(el) {
+            el.style.height = 'auto';
+            el.style.height = Math.min(el.scrollHeight, 80) + 'px';
+        }
+
+        function fchatKeydown(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendFChat(); }
+        }
+
+        function fchatAddMsg(role, text) {
+            const msgs = document.getElementById('fchatMessages');
+            const div = document.createElement('div');
+            div.className = `fchat-msg ${role}`;
+            div.innerHTML = role === 'ai' ? marked.parse(text) : escHtml(text);
+            msgs.appendChild(div);
+            scrollFChat();
+        }
+
+        async function sendFChat() {
+            const input = document.getElementById('fchatInput');
+            const text = input.value.trim();
+            if (!text) return;
+
+            input.value = '';
+            input.style.height = 'auto';
+            document.getElementById('fchatSend').disabled = true;
+
+            fchatAddMsg('user', text);
+            fchatHistory.push({ role: 'user', content: text });
+
+            const typing = document.getElementById('fchatTyping');
+            typing.classList.add('show');
+            scrollFChat();
+
+            try {
+                const res = await fetch(`${API_URL}/api/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: text,
+                        history: fchatHistory.slice(-10)
+                    })
+                });
+                const data = await res.json();
+                typing.classList.remove('show');
+                const reply = data.response || data.message || 'No response.';
+                fchatHistory.push({ role: 'assistant', content: reply });
+                fchatAddMsg('ai', reply);
+                if (!fchatOpen) {
+                    document.getElementById('fchatUnread').classList.add('show');
+                }
+            } catch(e) {
+                typing.classList.remove('show');
+                fchatAddMsg('ai', 'Connection error. Make sure the server is running.');
+            }
+
+            document.getElementById('fchatSend').disabled = false;
+            document.getElementById('fchatInput').focus();
         }
 
         // ─── Risk Matrix ──────────────────────────────────────────────────────
