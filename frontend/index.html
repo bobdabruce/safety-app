@@ -10,7 +10,7 @@
     <link rel="manifest" href="/static/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Barlow:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Barlow+Condensed:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -408,8 +408,8 @@
         /* Floating Notes Button — always on top of everything */
         .notes-fab {
             position: fixed;
-            bottom: 24px;
-            right: 24px;
+            bottom: 90px;
+            right: 16px;
             z-index: 10001;
             width: auto;
             height: auto;
@@ -675,13 +675,15 @@
         }
 
         .quick-btn {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
             background: rgba(255,255,255,0.07);
             border: 1px solid rgba(255,255,255,0.16);
             border-radius: 2px;
             padding: 8px 16px;
             color: #C8C4BE;
-            font-size: 13px;
+            font-size: 15px;
             font-weight: 600;
+            letter-spacing: 0.04em;
             cursor: pointer;
             transition: all 0.2s;
             white-space: nowrap;
@@ -700,12 +702,20 @@
         }
 
         .welcome h2 {
+            font-family: 'Barlow Condensed', system-ui, sans-serif;
             color: var(--text-primary);
             margin-bottom: 10px;
-            font-size: 1.5rem;
+            font-size: 2rem;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
         }
 
-        .welcome p { margin-bottom: 20px; }
+        .welcome p {
+            font-family: 'Barlow', system-ui, sans-serif;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
 
         @media (max-width: 600px) {
             .header h1 { font-size: 1.1rem; }
