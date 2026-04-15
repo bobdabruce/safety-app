@@ -912,6 +912,21 @@ async def clear_memory():
     }})
     return {"status": "memory cleared"}
 
+@app.get("/api/chat/history")
+async def get_chat_history(limit: int = 60):
+    """Return recent conversation history for display on load"""
+    memory = load_memory()
+    convs = memory.get("conversations", [])[-limit:]
+    return {"conversations": convs}
+
+@app.delete("/api/chat/history")
+async def clear_chat_history():
+    """Clear conversation history only"""
+    memory = load_memory()
+    memory["conversations"] = []
+    save_memory(memory)
+    return {"status": "cleared"}
+
 @app.get("/api/math/progress")
 async def get_math_progress():
     """Get math practice progress"""

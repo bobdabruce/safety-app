@@ -796,6 +796,15 @@
         .topic-name { font-size: 13px; font-weight: 600; color: #F0EDE8; }
         .topic-sub { font-size: 11px; color: var(--text-secondary); margin-top: 3px; }
         .topic-go { font-size: 14px; color: var(--text-secondary); }
+        .topic-badges { display: flex; align-items: center; gap: 5px; }
+        .topic-done { font-size: 13px; color: var(--success); }
+        .topic-score { font-size: 9px; font-weight: 800; padding: 2px 6px; border-radius: 2px; letter-spacing: 0.08em; }
+        .topic-score.pass { background: rgba(74,222,128,0.12); color: var(--success); border: 1px solid rgba(74,222,128,0.25); }
+        .topic-score.fail { background: rgba(232,64,64,0.1); color: var(--danger); border: 1px solid rgba(232,64,64,0.2); }
+        .streak-bar { display: flex; align-items: center; gap: 8px; padding: 8px 20px; background: rgba(var(--accent-rgb),0.06); border-bottom: 1px solid rgba(var(--accent-rgb),0.12); font-size: 11px; color: var(--text-secondary); font-family: 'Barlow Condensed', sans-serif; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; }
+        .streak-num { font-size: 15px; font-weight: 800; color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+        .progress-bar-wrap { flex: 1; height: 4px; background: rgba(255,255,255,0.06); border-radius: 2px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
         .course-actions { display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap; }
         .course-act-btn {
             flex: 1; min-width: 140px; padding: 10px 14px;
@@ -2280,6 +2289,47 @@
             if (id === 'riskmatrix') initRiskMatrix();
         }
 
+        // ─── OHS Progress Tracking ───────────────────────────────────────────
+        function getOHSProgress() {
+            try { return JSON.parse(localStorage.getItem('hazardiq_ohs_progress') || '{}'); } catch { return {}; }
+        }
+        function saveOHSProgress(p) {
+            localStorage.setItem('hazardiq_ohs_progress', JSON.stringify(p));
+        }
+        function calcStreak(days) {
+            if (!days || !days.length) return 0;
+            const sorted = [...days].sort().reverse();
+            const today = new Date().toISOString().split('T')[0];
+            const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+            if (sorted[0] !== today && sorted[0] !== yesterday) return 0;
+            let streak = 1;
+            for (let i = 0; i < sorted.length - 1; i++) {
+                const diff = (new Date(sorted[i]) - new Date(sorted[i+1])) / 86400000;
+                if (Math.round(diff) === 1) streak++;
+                else break;
+            }
+            return streak;
+        }
+        function markTopicComplete(cid, tid) {
+            const p = getOHSProgress();
+            if (!p.completed) p.completed = {};
+            p.completed[`${cid}_${tid}`] = true;
+            const today = new Date().toISOString().split('T')[0];
+            if (!p.studyDays) p.studyDays = [];
+            if (!p.studyDays.includes(today)) p.studyDays.push(today);
+            p.studyDays = p.studyDays.slice(-90);
+            p.streak = calcStreak(p.studyDays);
+            saveOHSProgress(p);
+        }
+        function saveQuizScore(cid, tid, pct) {
+            const p = getOHSProgress();
+            if (!p.scores) p.scores = {};
+            const key = `${cid}_${tid}`;
+            // keep best score
+            if (!p.scores[key] || pct > p.scores[key]) p.scores[key] = pct;
+            saveOHSProgress(p);
+        }
+
         // ─── Font Picker ──────────────────────────────────────────────────────
         const FONTS = {
             barlow:  { label: 'Barlow',           sub: 'Industrial',   body: "'Barlow', system-ui, sans-serif",                mono: "'JetBrains Mono', monospace" },
@@ -2412,6 +2462,54 @@
         // restore saved color
         const savedColor = localStorage.getItem('hazardiq_color');
         if (savedColor !== null) setColorTheme(+savedColor, {classList:{add:()=>{},remove:()=>{}}});
+
+        // ─── Load Chat History ────────────────────────────────────────────────
+        const DIVIDER_STYLE = 'text-align:center;font-size:10px;color:var(--text-secondary);padding:10px 0 6px;font-family:"Barlow Condensed",sans-serif;letter-spacing:0.1em;text-transform:uppercase;width:100%;';
+
+        async function loadChatHistory() {
+            try {
+                const r = await fetch(`${API_URL}/api/chat/history?limit=40`);
+                if (!r.ok) return;
+                const data = await r.json();
+                const convs = data.conversations || [];
+                if (!convs.length) return;
+                const container = document.getElementById('chatContainer');
+                const typing = document.getElementById('typingIndicator');
+                // history divider
+                const hdr = document.createElement('div');
+                hdr.style.cssText = DIVIDER_STYLE;
+                hdr.innerHTML = `— Chat history — <button onclick="clearChatHistory()" style="margin-left:8px;background:none;border:1px solid rgba(255,255,255,0.1);color:var(--text-secondary);font-size:9px;padding:2px 6px;border-radius:2px;cursor:pointer;font-family:inherit;letter-spacing:0.08em;">CLEAR</button>`;
+                container.insertBefore(hdr, typing);
+                convs.forEach(c => {
+                    const div = document.createElement('div');
+                    div.className = `message ${c.role === 'user' ? 'user' : 'assistant'}`;
+                    const ts = c.timestamp ? new Date(c.timestamp).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '';
+                    div.innerHTML = `${c.role === 'user' ? escHtml(c.content||'') : formatMessage(c.content||'')}<div class="time">${ts}</div>`;
+                    container.insertBefore(div, typing);
+                });
+                // new session divider
+                const now = document.createElement('div');
+                now.style.cssText = DIVIDER_STYLE;
+                now.textContent = '— New session —';
+                container.insertBefore(now, typing);
+                scrollToBottom();
+            } catch(e) { /* silent */ }
+        }
+
+        async function clearChatHistory() {
+            await fetch(`${API_URL}/api/chat/history`, {method:'DELETE'});
+            // remove all history messages up to the "New session" divider
+            const container = document.getElementById('chatContainer');
+            const all = [...container.children];
+            let clearing = false;
+            all.forEach(el => {
+                if (el.textContent.includes('Chat history')) clearing = true;
+                if (clearing && !el.id) el.remove();
+                if (el.textContent.includes('New session')) clearing = false;
+            });
+        }
+
+        loadChatHistory();
 
         // ─── OHS Glossary ─────────────────────────────────────────────────────
         const GLOSSARY = [
@@ -3130,15 +3228,34 @@
             <div id="sourcesModal" style="display:none"></div>`;
             const r = await fetch(`/api/ohs/chapters/${course.id}/topics`);
             const topics = await r.json();
-            document.getElementById('topicList').innerHTML = topics.map(t => `
-                <div class="topic-row" onclick="showStudyContent(${JSON.stringify(t).replace(/"/g,'&quot;')})">
+            const prog = getOHSProgress();
+            const doneCount = topics.filter(t => prog.completed?.[`${course.id}_${t.id}`]).length;
+            const pct = topics.length ? Math.round(doneCount / topics.length * 100) : 0;
+            const streak = prog.streak || 0;
+            // insert streak + progress bar above topic list
+            document.getElementById('topicList').innerHTML = `
+                <div class="streak-bar">
+                    <span>🔥 Streak</span><span class="streak-num">${streak}</span>
+                    <span style="margin-left:4px">days</span>
+                    <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:${pct}%"></div></div>
+                    <span style="white-space:nowrap">${doneCount}/${topics.length} done</span>
+                </div>` +
+            topics.map(t => {
+                const key = `${course.id}_${t.id}`;
+                const done = prog.completed?.[key];
+                const score = prog.scores?.[key];
+                const scoreBadge = score !== undefined
+                    ? `<span class="topic-score ${score >= 70 ? 'pass' : 'fail'}">${score}%</span>` : '';
+                const doneBadge = done ? `<span class="topic-done">✓</span>` : '';
+                return `<div class="topic-row" onclick="showStudyContent(${JSON.stringify(t).replace(/"/g,'&quot;')})">
                     <div class="topic-num">${t.id}</div>
                     <div class="topic-info">
                         <div class="topic-name">${t.title}</div>
                         <div class="topic-sub">${t.subtitle||''}</div>
                     </div>
-                    <div class="topic-go">›</div>
-                </div>`).join('');
+                    <div class="topic-badges">${scoreBadge}${doneBadge}<span class="topic-go">›</span></div>
+                </div>`;
+            }).join('');
         }
 
         async function showStudyContent(topic) {
@@ -3198,6 +3315,8 @@
                 });
                 studyContent[cacheKey] = text;
                 el.innerHTML = '<div class="study-content">'+marked.parse(text)+'</div>';
+                // mark topic as read
+                if (studyCourse && studyTopic) markTopicComplete(studyCourse.id, studyTopic.id);
             } catch(e) {
                 if (e.name !== 'AbortError') el.innerHTML = `<div style="color:#ef4444">Error: ${e.message}</div>`;
             } finally {
@@ -3300,6 +3419,7 @@
                 const correct = studyQuiz.filter((q,i) => studyAnswers[i] === q.answer).length;
                 const pct = Math.round(correct/studyQuiz.length*100);
                 scoreHtml = `<div class="quiz-score"><div class="quiz-score-num">${pct}%</div><div style="color:var(--text-secondary);font-size:14px">${correct}/${studyQuiz.length} correct</div></div>`;
+                if (studyCourse && studyTopic) saveQuizScore(studyCourse.id, studyTopic.id, pct);
             }
             document.getElementById('quizContent').innerHTML = `${scoreHtml}${qs}
             <div class="quiz-submit-bar">
